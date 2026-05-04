@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API_BASE_URL ="https://mb951v43-8080.inc1.devtunnels.ms"
+export const API_BASE_URL ="social-app-backend-production-c81c.up.railway.app"
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
