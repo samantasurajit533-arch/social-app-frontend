@@ -1,6 +1,7 @@
 import axios from "axios";
 
-export const API_BASE_URL ="social-app-backend-production-c81c.up.railway.app"
+export const API_BASE_URL = "https://social-app-backend-production-c81c.up.railway.app";
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
