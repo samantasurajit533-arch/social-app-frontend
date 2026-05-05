@@ -2,14 +2,18 @@ import React from 'react'
 
 const ChatMEssage = ({ message, isCurrentUser }) => {
   return (
-    <div className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`px-4 py-2 rounded-2xl max-w-[70%] text-sm shadow-sm ${
-        isCurrentUser ? 'bg-[#181d26] text-white rounded-tr-none' : 'bg-white border border-gray-200 text-black rounded-tl-none'
+    <div className={`flex w-full mb-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`px-4 py-2.5 text-sm max-w-[85%] sm:max-w-[70%] shadow-sm tracking-wide leading-relaxed transition-all ${
+        isCurrentUser 
+          ? 'bg-[#1e293b] text-slate-100 rounded-2xl rounded-tr-sm' 
+          : 'bg-white border border-slate-100 text-slate-800 rounded-2xl rounded-tl-sm'
       }`}>
         {message.image && (
-          <img src={message.image} alt="sent" className='w-full h-auto rounded-lg mb-2 object-cover max-h-60' />
+          <div className="rounded-xl overflow-hidden mb-2 max-h-64 border border-black/5">
+            <img src={message.image} alt="Sent media" className='w-full h-auto object-cover' />
+          </div>
         )}
-        <p className='leading-relaxed'>{message.content}</p>
+        <p className='whitespace-pre-wrap break-words'>{message.content}</p>
       </div>
     </div>
   )

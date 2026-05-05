@@ -16,7 +16,6 @@ const Message = () => {
   const scrollRef = useRef(null);
   const theme = useTheme();
   
-  // Check if screen is mobile size (sm = 600px, md = 900px)
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [inputValue, setInputValue] = useState("");
@@ -44,69 +43,73 @@ const Message = () => {
   };
 
   return (
-    <div className='h-screen w-full bg-white flex overflow-hidden'>
+    // Height adjusted to account safely for global platform bottom navbars on mobile viewports
+    <div className='h-[calc(100vh-70px)] md:h-screen w-full bg-slate-50 flex overflow-hidden font-sans antialiased'>
       <Backdrop sx={{ color: '#fff', zIndex: 1500 }} open={isUploading}><CircularProgress color="inherit" /></Backdrop>
 
       <Grid container className='h-full'>
-        {/* SIDEBAR - Hidden on mobile if a chat is selected */}
+        {/* SIDEBAR */}
         <Grid 
           item 
-          xs={12} md={3} 
-          className={`border-r border-gray-200 h-full flex flex-col ${isMobile && id ? 'hidden' : 'block'}`}
+          xs={12} md={3.5} lg={3}
+          className={`border-r border-slate-200 h-full flex flex-col bg-white ${isMobile && id ? 'hidden' : 'flex'}`}
         >
           <div className='p-4 space-y-4 bg-white'>
             <div className='flex items-center space-x-3'>
-              <West className='cursor-pointer text-gray-600' onClick={() => navigate("/")} />
-              <h1 className='text-xl font-bold'>Messages</h1>
+              <West className='cursor-pointer text-slate-600 hover:text-slate-900 transition-colors' onClick={() => navigate("/")} />
+              <h1 className='text-xl font-black text-slate-900 tracking-tight'>Messages</h1>
             </div>
             <SearchUser /> 
           </div>
-          <Divider />
-          <div className='flex-1 overflow-y-auto'>
+          <Divider sx={{ opacity: 0.6 }} />
+          <div className='flex-1 overflow-y-auto px-2 py-1 space-y-1'>
             {chats?.length > 0 ? (
               chats.map((chat) => (
                 <UserChatCard key={chat.id} chat={chat} auth={auth} active={String(id) === String(chat.id)} />
               ))
             ) : (
-              <div className='flex flex-col items-center justify-center mt-20 text-gray-400'>
-                {loading ? <CircularProgress size={24} /> : <p className='text-sm'>No conversations yet</p>}
+              <div className='flex flex-col items-center justify-center mt-20 text-slate-400'>
+                {loading ? <CircularProgress size={20} /> : <p className='text-xs font-medium'>No active streams</p>}
               </div>
             )}
           </div>
         </Grid>
 
-        {/* CHAT WINDOW - Hidden on mobile if NO chat is selected */}
+        {/* MODERN CHAT WINDOW */}
         <Grid 
           item 
-          xs={12} md={9} 
-          className={`h-full flex flex-col bg-[#f0f2f5] ${isMobile && !id ? 'hidden' : 'block'}`}
+          xs={12} md={8.5} lg={9}
+          className={`h-full flex flex-col bg-slate-50 ${isMobile && !id ? 'hidden' : 'flex'}`}
         >
           {id ? (
             <>
-              {/* Header with Back Button for Mobile */}
-              <div className='p-3 bg-white border-b flex justify-between items-center z-10 shadow-sm'>
-                <div className='flex items-center space-x-2'>
+              {/* Header */}
+              <div className='p-4 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center z-10 shadow-sm sticky top-0'>
+                <div className='flex items-center space-x-3 min-w-0'>
                   {isMobile && (
-                    <IconButton onClick={() => navigate('/message')}>
-                      <ArrowBackIosNew fontSize="small" />
+                    <IconButton onClick={() => navigate('/message')} size="small" className="mr-1">
+                      <ArrowBackIosNew sx={{ fontSize: 16, color: '#475569' }} />
                     </IconButton>
                   )}
-                  <Avatar src={partner?.profileImage} sx={{ width: 40, height: 40, bgcolor: "#1976d2" }}>
+                  <Avatar src={partner?.profileImage} sx={{ width: 38, height: 38, bgcolor: "#1e293b", fontSize: '0.9rem', fontWeight: 'bold' }}>
                     {!partner?.profileImage && displayName.charAt(0)}
                   </Avatar>
                   <div className='min-w-0'>
-                    <p className='font-bold text-gray-800 text-sm truncate'>{displayName}</p>
-                    <p className='text-[10px] text-green-500 font-bold uppercase'>online</p>
+                    <p className='font-bold text-slate-900 text-sm truncate'>{displayName}</p>
+                    <div className='flex items-center space-x-1.5'>
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                      <p className='text-[10px] text-slate-500 font-semibold tracking-wide uppercase'>Active Now</p>
+                    </div>
                   </div>
                 </div>
-                <div className='flex space-x-2'>
-                  <IconButton size="small"><CallIcon fontSize="small"/></IconButton>
-                  <IconButton size="small"><VideoCallIcon fontSize="small"/></IconButton>
+                <div className='flex space-x-1 text-slate-500'>
+                  <IconButton size="small"><CallIcon sx={{ fontSize: 18 }} /></IconButton>
+                  <IconButton size="small"><VideoCallIcon sx={{ fontSize: 20 }} /></IconButton>
                 </div>
               </div>
 
-              {/* Messages Area */}
-              <div className='flex-1 overflow-y-auto p-4 space-y-3 bg-[#e5ddd5]'>
+              {/* Message Streams Frame */}
+              <div className='flex-1 overflow-y-auto p-4 space-y-2.5 bg-slate-50/50 custom-scrollbar'>
                 {messages?.map((msg, i) => (
                   <ChatMEssage 
                     key={i} 
@@ -117,32 +120,43 @@ const Message = () => {
                 <div ref={scrollRef} />
               </div>
 
-              {/* Input Area */}
-              <div className='p-3 bg-white border-t'>
-                <div className='flex items-center space-x-2 bg-gray-100 rounded-full px-4 py-1 border border-gray-200'>
+              {/* Text Area Accessory Box */}
+              <div className='p-4 bg-white border-t border-slate-200'>
+                <div className='flex items-center space-x-2 bg-slate-100 rounded-2xl px-4 py-1.5 border border-slate-200 focus-within:border-slate-400 focus-within:bg-white transition-all'>
+                  <IconButton size="small" className="text-slate-400 hover:text-slate-600">
+                    <ImageIcon sx={{ fontSize: 20 }} />
+                  </IconButton>
                   <input 
-                    className='flex-1 bg-transparent py-2 outline-none text-sm' 
-                    placeholder='Type a message...' 
+                    className='flex-1 bg-transparent py-2 outline-none text-sm text-slate-800 placeholder-slate-400' 
+                    placeholder='Write your message...' 
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} 
                   />
                   <IconButton 
                     onClick={handleSendMessage} 
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() && !selectedImage}
                     size="small"
+                    sx={{
+                      backgroundColor: inputValue.trim() ? '#1e293b' : 'transparent',
+                      color: inputValue.trim() ? 'white' : '#94a3b8',
+                      '&:hover': { backgroundColor: inputValue.trim() ? '#334155' : 'transparent' },
+                      transition: 'all 0.2s'
+                    }}
                   >
-                    <Send sx={{ color: inputValue.trim() ? "#1976d2" : "gray" }} />
+                    <Send sx={{ fontSize: 16 }} />
                   </IconButton>
                 </div>
               </div>
             </>
           ) : (
-            /* Empty State for Desktop */
-            <div className='h-full flex flex-col items-center justify-center text-gray-400 bg-white p-6 text-center'>
-              <Send sx={{ fontSize: 80, opacity: 0.1, mb: 2 }} />
-              <h2 className='text-2xl font-bold text-gray-800'>SnapTalk Web</h2>
-              <p className='text-sm max-w-xs'>Select a chat to start messaging friends and family.</p>
+            /* Blank Slate Window */
+            <div className='h-full flex flex-col items-center justify-center text-slate-400 bg-white p-6 text-center'>
+              <div className="p-4 bg-slate-50 rounded-3xl mb-4 border border-slate-100">
+                <Send sx={{ fontSize: 42, transform: 'rotate(-20deg)', color: '#64748b' }} />
+              </div>
+              <h2 className='text-xl font-black text-slate-800 tracking-tight mb-1'>SnapTalk Inbox</h2>
+              <p className='text-xs text-slate-500 max-w-xs leading-relaxed'>Select a connection from the left sidebar panel to begin an encrypted session window.</p>
             </div>
           )}
         </Grid>

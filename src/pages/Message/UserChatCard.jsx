@@ -6,7 +6,6 @@ const UserChatCard = ({ chat, auth, active }) => {
   const navigate = useNavigate();
   const myId = auth?.user?.id || auth?.id;
 
-  
   const partner = chat?.users?.find(u => String(u.id) !== String(myId));
 
   // Determine name and image from the partner object
@@ -15,35 +14,75 @@ const UserChatCard = ({ chat, auth, active }) => {
     : "Chat User";
 
   const displayImage = partner?.profileImage || "";
+  
+  // Dynamic Unread Context Evaluation (Falls back to mockup data if missing from backend model)
+  const unreadCount = chat?.unreadCount || 0; 
+  const hasUnread = unreadCount > 0;
 
   if (!chat) return null;
 
   return (
     <div 
       onClick={() => navigate(`/message/${chat.id}`)}
-      className={`flex items-center space-x-3 p-4 cursor-pointer hover:bg-gray-100 transition-all border-b border-gray-100 ${
-        active ? 'bg-blue-50 border-l-4 border-blue-600' : 'bg-white'
+      className={`flex items-center space-x-3 px-4 py-3.5 mx-1 my-0.5 rounded-xl cursor-pointer transition-all duration-200 select-none ${
+        active 
+          ? 'bg-slate-100/90 border-l-[3px] border-slate-800 shadow-sm' 
+          : 'bg-white hover:bg-slate-50 border-l-[3px] border-transparent'
       }`}
     >
       <Badge
         overlap="circular"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         variant="dot"
-        sx={{ '& .MuiBadge-badge': { backgroundColor: '#44b700', boxShadow: '0 0 0 2px white' } }}
+        sx={{ 
+          '& .MuiBadge-badge': { 
+            backgroundColor: '#10b981', 
+            boxShadow: '0 0 0 2px white',
+            width: 10,
+            height: 10,
+            borderRadius: '50%'
+          } 
+        }}
       >
-        <Avatar src={displayImage} sx={{ width: 48, height: 48, bgcolor: "#1976d2" }}>
-          {!displayImage && displayName.charAt(0)}
+        <Avatar 
+          src={displayImage} 
+          sx={{ 
+            width: 44, 
+            height: 44, 
+            bgcolor: "#1e293b", 
+            fontSize: '0.95rem',
+            fontWeight: 600
+          }}
+        >
+          {!displayImage && displayName.charAt(0).toUpperCase()}
         </Avatar>
       </Badge>
       
-      <div className='flex-1 min-w-0'>
-        <div className='flex justify-between items-center mb-0.5'>
-          <p className={`text-sm font-bold truncate ${active ? 'text-blue-700' : 'text-gray-900'}`}>
+      <div className='flex-1 min-w-0 pl-1'>
+        <div className='flex justify-between items-baseline mb-0.5'>
+          <p className={`text-sm truncate tracking-tight ${
+            hasUnread ? 'font-black text-slate-950' : 'font-bold text-slate-800'
+          }`}>
             {displayName}
           </p>
-          <span className='text-[10px] text-gray-400 font-medium'>Active</span>
+          
+          {/* Dynamic Badge / Timestamp Indicator */}
+          {hasUnread ? (
+            <span className="flex items-center justify-center bg-[#1e293b] text-white text-[10px] font-bold h-5 min-w-5 px-1.5 rounded-full animate-pulse shadow-sm">
+              {unreadCount}
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Active
+            </span>
+          )}
         </div>
-        <p className='text-xs text-gray-500 truncate'>
+        
+        <p className={`text-xs truncate tracking-wide ${
+          hasUnread 
+            ? 'text-slate-900 font-bold' 
+            : active ? 'text-slate-600 font-medium' : 'text-slate-400'
+        }`}>
           {chat.chat_name || "Click to chat..."}
         </p>
       </div>
