@@ -7,17 +7,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateProfileAction } from '../../pages/Redux/Auth/auth.action';
 import { uploadToCloudniry } from '../../utils/uploadToCloudniry';
 
+// Responsive Material-UI sx Style Object
 const style = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 600,
+  // Takes up full viewport width/height on mobile, regular container size on desktop
+  width: { xs: '100vw', sm: 600 },
+  height: { xs: '100vh', sm: 'auto' },
+  maxHeight: { xs: '100vh', sm: '90vh' },
+  overflowY: 'auto',
   bgcolor: 'background.paper',
   boxShadow: 24,
-  p: 2,
+  p: { xs: 2, sm: 3 },
   outline: "none",
-  borderRadius: 3,
+  borderRadius: { xs: 0, sm: 3 }, // Full-bleed screen style on mobile
 };
 
 export default function ProfileModel({ open, handleClose }) {
@@ -40,56 +45,59 @@ export default function ProfileModel({ open, handleClose }) {
     }
   });
 
- const handleImageChange = async (event, fieldName) => {
-  setUploading(true);
-  try {
-    const file = event.target.files;
-    const imageUrl = await uploadToCloudniry(file, "image");
+  const handleImageChange = async (event, fieldName) => {
+    setUploading(true);
+    try {
+      const file = event.target.files;
+      const imageUrl = await uploadToCloudniry(file, "image");
 
-    if (imageUrl) {
-      // Use await if your formik version supports it, or check the value in the next render
-      await formik.setFieldValue(fieldName, imageUrl);
-      console.log(`${fieldName} uploaded:`, imageUrl);
+      if (imageUrl) {
+        await formik.setFieldValue(fieldName, imageUrl);
+        console.log(`${fieldName} uploaded:`, imageUrl);
+      }
+    } catch (error) {
+      console.error("Upload failed", error);
+    } finally {
+      setUploading(false);
     }
-  } catch (error) {
-    console.error("Upload failed", error);
-  } finally {
-    setUploading(false);
-  }
-};
+  };
 
   return (
     <Modal
       open={open}
       onClose={handleClose}
       aria-labelledby="modal-modal-title"
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <Box sx={style}>
-        <form onSubmit={formik.handleSubmit}>
-          {/* Header */}
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center space-x-3'>
-              <IconButton onClick={handleClose}>
+        <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
+          
+          {/* Top Navigation / Header */}
+          <div className='flex items-center justify-between pb-2'>
+            <div className='flex items-center space-x-2'>
+              <IconButton onClick={handleClose} size="medium">
                 <CloseIcon />
               </IconButton>
-              <Typography variant="h6">Edit Profile</Typography>
+              <Typography variant="h6" className="font-bold text-gray-900" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                Edit Profile
+              </Typography>
             </div>
             <Button 
               type="submit" 
               variant="text" 
-              sx={{ fontWeight: 'bold' }} 
+              sx={{ fontWeight: 'bold', fontSize: { xs: '0.85rem', sm: '1rem' } }} 
               disabled={uploading}
             >
               {uploading ? "Uploading..." : "SAVE"}
             </Button>
           </div>
 
-          {/* Cover Photo Section */}
-          <div className='h-[15rem] relative mt-2'>
-            <div className='w-full h-full relative'>
+          {/* Media Header Area */}
+          <div className='h-[10rem] sm:h-[15rem] relative mt-2 flex-shrink-0'>
+            <div className='w-full h-full relative bg-gray-100 rounded-md overflow-hidden'>
               <img 
-                className='w-full h-full object-cover rounded-md' 
-                src={formik.values.coverPhoto || "https://pixabay.com"} 
+                className='w-full h-full object-cover' 
+                src={formik.values.coverPhoto || "https://unsplash.com"} 
                 alt="cover" 
               />
               <input
@@ -100,14 +108,14 @@ export default function ProfileModel({ open, handleClose }) {
                 onChange={(e) => handleImageChange(e, "coverPhoto")}
               />
               <label htmlFor="cover-input" className="absolute top-2 right-2">
-                <IconButton component="span" sx={{ bgcolor: "white", "&:hover": { bgcolor: "#f5f5f5" } }}>
-                  <AddPhotoAlternateIcon color="primary" />
+                <IconButton component="span" size="small" sx={{ bgcolor: "white", "&:hover": { bgcolor: "#f5f5f5" }, boxShadow: 2 }}>
+                  <AddPhotoAlternateIcon color="primary" fontSize="small" />
                 </IconButton>
               </label>
             </div>
 
-            {/* Profile Avatar Section */}
-            <div className='absolute -bottom-10 left-5'>
+            {/* Profile Avatar Frame */}
+            <div className='absolute -bottom-8 sm:-bottom-10 left-4 sm:left-5'>
               <input
                 accept="image/*"
                 id="avatar-input"
@@ -120,10 +128,11 @@ export default function ProfileModel({ open, handleClose }) {
                   <Avatar 
                     src={formik.values.profileImage}
                     sx={{ 
-                        width: "8rem", 
-                        height: "8rem", 
+                        width: { xs: "5.5rem", sm: "8rem" }, 
+                        height: { xs: "5.5rem", sm: "8rem" }, 
                         border: "4px solid white", 
                         bgcolor: "#2196f3",
+                        boxShadow: 3,
                         opacity: uploading ? 0.6 : 1
                     }}
                   >
@@ -134,8 +143,8 @@ export default function ProfileModel({ open, handleClose }) {
             </div>
           </div>
 
-          {/* Form Fields */}
-          <div className='mt-14 space-y-5 px-3'>
+          {/* Input Form Fields */}
+          <div className='mt-12 sm:mt-14 space-y-5 px-1 sm:px-3 pb-6 flex-1'>
             <TextField
               fullWidth
               id="firstName"
@@ -144,6 +153,7 @@ export default function ProfileModel({ open, handleClose }) {
               value={formik.values.firstName}
               onChange={formik.handleChange}
               variant="outlined"
+              size="medium"
             />
             <TextField
               fullWidth
@@ -153,6 +163,7 @@ export default function ProfileModel({ open, handleClose }) {
               value={formik.values.lastName}
               onChange={formik.handleChange}
               variant="outlined"
+              size="medium"
             />
           </div>
         </form>

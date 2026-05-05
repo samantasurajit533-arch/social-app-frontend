@@ -7,7 +7,7 @@ const UserReelCard = ({ videoSrc, views = "1.2K" }) => {
 
   const handleMouseEnter = () => {
     setIsHovered(true);
-    videoRef.current?.play().catch(() => {}); // Catch prevents errors if browser blocks autoplay
+    videoRef.current?.play().catch(() => {}); 
   };
 
   const handleMouseLeave = () => {
