@@ -1,36 +1,70 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { Play, Eye } from 'lucide-react';
 
-const UserReelCard = ({ videoSrc }) => {
+const UserReelCard = ({ videoSrc, views = "1.2K" }) => {
+  const videoRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    videoRef.current?.play().catch(() => {}); // Catch prevents errors if browser blocks autoplay
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
   return (
-    <div className='w-[15rem] px-2 mb-4'>
-      <div className="relative group aspect-[9/16] w-full bg-black rounded-lg overflow-hidden cursor-pointer shadow-lg border border-gray-800">
+    <div className='w-full sm:w-[16rem] px-2 mb-6'>
+      <div 
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="relative group aspect-[9/16] w-full bg-[#16181c] rounded-2xl overflow-hidden cursor-pointer shadow-2xl border border-white/5 transition-transform duration-300 hover:scale-[1.02] hover:z-10"
+      >
         
-        {/* Video - Loop on hover or simple preview */}
+        {/* Video Element */}
         <video 
-          className='w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-300' 
-          src={videoSrc || 'https://www.pexels.com/download/video/36118670/'}
+          ref={videoRef}
+          className={`w-full h-full object-cover transition-all duration-500 ${
+            isHovered ? 'scale-105' : 'grayscale-[30%]'
+          }`} 
+          src={videoSrc}
           muted
           loop
-          onMouseOver={(e) => e.target.play()}
-          onMouseOut={(e) => {
-            e.target.pause();
-            e.target.currentTime = 0;
-          }}
+          playsInline // Crucial for mobile
         />
 
-        {/* Play Icon Overlay (Shows on hover) */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-          <div className="bg-white/20 p-3 rounded-full backdrop-blur-sm">
-            <svg xmlns="http://w3.org" fill="white" viewBox="0 0 24 24" strokeWidth={1.5} stroke="white" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653z" />
-            </svg>
+        {/* Top Gradient (Subtle) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 opacity-80" />
+
+        {/* Center Play Button (Modern Glassmorphism) */}
+        <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+          isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+        }`}>
+          <div className="bg-white/10 p-4 rounded-full backdrop-blur-md border border-white/20 shadow-xl">
+            <Play fill="white" className="text-white w-6 h-6 ml-0.5" />
           </div>
         </div>
 
-        {/* View Count (Optional Mockup) */}
-        <div className="absolute bottom-2 left-2 flex items-center gap-1 text-white text-xs font-semibold drop-shadow-md">
-           <span>▶</span> 1.2K
+        {/* View Count & Bottom Info */}
+        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+             <Play size={12} fill="white" className="text-white" />
+             <span className="text-[11px] font-bold tracking-wide">{views}</span>
+          </div>
+          
+          {/* Heart/Like Indicator (Optional visual flair) */}
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          </div>
         </div>
+
+        {/* Interaction Overlay for Mobile (Tap to Play) */}
+        <div className="absolute inset-0 md:hidden bg-transparent" onClick={handleMouseEnter} />
       </div>
     </div>
   );
