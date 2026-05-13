@@ -1,7 +1,7 @@
-import { Button, TextField } from '@mui/material';
+import { Button, TextField, Box, Typography } from '@mui/material';
 import { Formik, Form } from 'formik';
 import React from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux'; // Added useSelector
 import { useNavigate } from 'react-router-dom';
 import * as Yup from "yup";
 import { loginUserAction } from '../Redux/Auth/auth.action';
@@ -25,13 +25,16 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSubmit = (values, { setSubmitting }) => {
+  // Connect to global Redux state to handle network loading indicators
+  const { loading } = useSelector((state) => state.auth || state);
+
+  const handleSubmit = (values) => {
+    // Pass the payload values and navigate hook down to your custom api interceptor thunk
     dispatch(loginUserAction({ data: values, navigate }));
-    setSubmitting(false);
   };
 
   return (
-    <>
+    <Box sx={{ maxWidth: 450, margin: "0 auto", padding: 2 }}>
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -39,6 +42,9 @@ const Login = () => {
       >
         {({ values, handleChange, handleBlur, errors, touched }) => (
           <Form className="space-y-5">
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              Login
+            </Typography>
 
             <TextField
               name="email"
@@ -68,17 +74,16 @@ const Login = () => {
               fullWidth
               type="submit"
               variant="contained"
+              disabled={loading} // Disables button while authentication network request is pending
               sx={{ padding: ".8rem 0rem" }}
             >
-              Login
+              {loading ? "Authenticating..." : "Login"}
             </Button>
 
           </Form>
         )}
       </Formik>
-
-      
-    </>
+    </Box>
   );
 };
 

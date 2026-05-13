@@ -10,7 +10,7 @@ const SearchUser = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  // FIXED: Looking in store.auth.searchUser
+
   const searchUser = useSelector(store => store.auth.searchUser);
 
   const handleSearch = (e) => {
@@ -22,12 +22,11 @@ const SearchUser = () => {
   };
 
   const handleSelectUser = async (userId) => {
-    // 1. Get the Chat Room ID from backend
+   
     const chatResponse = await dispatch(createChatAction(userId));
 
     if (chatResponse && chatResponse.id) {
       setQuery(""); 
-      // 2. Navigate to ROOM ID (e.g. /message/10) to fix 400 error
       navigate(`/message/${chatResponse.id}`); 
     }
   };
