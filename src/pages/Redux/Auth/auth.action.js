@@ -61,10 +61,13 @@ export const requestOtpAction = (userData, setStep) => async (dispatch) => {
 export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
-    // Send query parameters matching your Spring Boot @RequestParam setup
-    const { data } = await api.post(
-      `/auth/signup/verify?email=${verificationData.email}&otp=${verificationData.otp}`
-    );
+    // Send as params instead of a long string URL
+    const { data } = await api.post("/auth/signup/verify", null, {
+      params: {
+        email: verificationData.email,
+        otp: verificationData.otp
+      }
+    });
 
     if (data.token) {
       localStorage.setItem("jwt", data.token);
@@ -73,12 +76,12 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
       verificationData.navigate("/");
     }
   } catch (error) {
-    const errorMsg = error.response?.data || error.message;
-    console.error("Verification Error:", errorMsg);
+    const errorMsg = error.response?.data || "Verification Failed";
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg); // Inform user if code is incorrect/expired
+    alert(errorMsg);
   }
 };
+
 
 // 4. Fetch Profile Action (Cleaned trailing base URL out of path)
 export const getProfileAction = (jwt) => async (dispatch) => {
