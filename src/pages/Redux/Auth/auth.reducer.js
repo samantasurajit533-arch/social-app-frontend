@@ -39,9 +39,9 @@ export const authReducer = (state = initialState, action) => {
       return { ...state, reqUser: action.payload, loading: false, error: null };
 
     case LOGIN_SUCCESS:
-    case REGISTER_SUCCESS: 
-      // Reset loading to false and update JWT (if present in payload)
-      return { ...state, jwt: action.payload || state.jwt, loading: false, error: null };
+    case REGISTER_SUCCESS:
+  return { ...state, loading: false };
+
 
     case LOGIN_FAILURE:
     case REGISTER_FAILURE:

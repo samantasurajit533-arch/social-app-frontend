@@ -44,11 +44,13 @@ export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
     await api.post("/auth/signup/request", userData);
+    
+    // STOP LOADING HERE
     dispatch({ type: REGISTER_SUCCESS, payload: null }); 
-    setStep(2);
+    
+    setStep(2); 
   } catch (error) {
     dispatch({ type: REGISTER_FAILURE, payload: error.response?.data });
-    alert(error.response?.data || "Error sending OTP");
   }
 };
 
