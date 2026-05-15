@@ -1,7 +1,6 @@
-import { Avatar, Card, CardActions, CardContent, CardHeader, CardMedia, Divider, IconButton, Typography } from '@mui/material';
+import { Avatar, Card, CardActions, CardContent, CardHeader, CardMedia, Divider, IconButton, Typography, Box } from '@mui/material';
 import React, { useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { red } from '@mui/material/colors';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShareIcon from '@mui/icons-material/Share';
@@ -13,115 +12,90 @@ import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post
 const PostCard = ({ item }) => {
   const dispatch = useDispatch();
   const [showComments, setShowComments] = useState(false);
-  
   const { user: currentUser } = useSelector((store) => store.auth);
 
-  const handleLikePost = () => {
-    dispatch(likePostAction(item.id));
-  };
-
+  const handleLikePost = () => dispatch(likePostAction(item.id));
   const isLiked = item.liked?.some((user) => user.id === currentUser?.id);
   const handleShowComment = () => setShowComments(!showComments);
 
   const handleCreateComment = (content) => {
-    const reqData = {
-      postId: item.id,
-      data: { content }
-    };
-    dispatch(createCommentAction(reqData));
+    dispatch(createCommentAction({ postId: item.id, data: { content } }));
   };
 
-  // Helper to ensure media URLs use HTTPS to prevent browser blocks
   const getSecureUrl = (url) => url?.replace("http://", "https://");
-
-  const isVideo = (url) => {
-    if (!url) return false;
-    // Updated to catch all Cloudinary video patterns
-    return url.includes("/video/") || url.match(/\.(mp4|mov|avi|wmv|webm)$/) !== null;
-  };
+  const isVideo = (url) => url?.includes("/video/") || url?.match(/\.(mp4|mov|avi|wmv|webm)$/) !== null;
 
   if (!item) return null;
 
   return (
-    <Card className='!rounded-xl border border-gray-100 shadow-sm mb-5'>
+    <Card sx={{ 
+      borderRadius: '24px', 
+      background: 'rgba(30, 41, 59, 0.6)', 
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(255, 255, 255, 0.08)',
+      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+      mb: 4,
+      overflow: 'hidden'
+    }}>
       <CardHeader
         avatar={
-          <Avatar 
-            src={item.user?.profileImage} 
-            sx={{ bgcolor: red[500] }}
-          >
+          <Avatar src={item.user?.profileImage} sx={{ border: '2px solid #6366f1' }}>
             {!item.user?.profileImage && item.user?.firstName?.[0]}
           </Avatar>
         }
-        action={<IconButton><MoreVertIcon /></IconButton>}
-        title={item.user ? `${item.user.firstName} ${item.user.lastName}` : "Unknown User"}
-        subheader={`@${item.user?.firstName?.toLowerCase() || "user"}`}
+        action={<IconButton sx={{ color: 'white' }}><MoreVertIcon /></IconButton>}
+        title={<Typography sx={{ fontWeight: 700, color: 'white' }}>{item.user ? `${item.user.firstName} ${item.user.lastName}` : "User"}</Typography>}
+        subheader={<Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{`@${item.user?.firstName?.toLowerCase()}`}</Typography>}
       />
       
-      {/* MEDIA SECTION */}
-      <div className="w-full bg-[#f9f9f9] flex justify-center overflow-hidden border-y border-gray-50">
-        {item.image ? (
-          isVideo(item.image) ? (
-            <div className="w-full bg-black flex justify-center">
-              <video 
-                controls 
-                autoPlay // Optional: starts playing when loaded
-                muted // CRITICAL: Required for browsers to allow autoplay/loading
-                loop
-                playsInline 
-                className="w-full max-h-[500px] object-contain cursor-pointer" 
-                src={getSecureUrl(item.image)}
-              />
-            </div>
-          ) : (
-            <CardMedia
-              component="img"
-              image={getSecureUrl(item.image)}
-              alt="post content"
-              sx={{ maxHeight: '500px', width: "100%", objectFit: 'contain' }}
-            />
-          )
-        ) : null}
-      </div>
+      {/* MEDIA: Rounded with Padding for "Bento" look */}
+      <Box sx={{ px: 2 }}>
+        <Box sx={{ 
+          width: '100%', 
+          borderRadius: '16px', 
+          overflow: 'hidden', 
+          bgcolor: 'rgba(0,0,0,0.2)',
+          display: 'flex',
+          justifyContent: 'center'
+        }}>
+          {item.image && (
+            isVideo(item.image) ? (
+              <video controls muted loop playsInline className="w-full max-h-[500px] object-contain" src={getSecureUrl(item.image)} />
+            ) : (
+              <CardMedia component="img" image={getSecureUrl(item.image)} alt="content" sx={{ maxHeight: '500px', width: "100%", objectFit: 'cover' }} />
+            )
+          )}
+        </Box>
+      </Box>
 
       <CardContent>
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: "1rem" }}>
+        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: "0.95rem", lineHeight: 1.6 }}>
           {item.caption}
         </Typography>
       </CardContent>
 
-      <CardActions className='flex justify-between' disableSpacing>
-        <div className='flex items-center'>
-          <IconButton onClick={handleLikePost}>
-            {isLiked ? <FavoriteIcon sx={{ color: "red" }} /> : <FavoriteBorderIcon />}
+      <CardActions sx={{ px: 2, pb: 2, display: 'flex', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton onClick={handleLikePost} sx={{ color: isLiked ? '#ef4444' : 'white' }}>
+            {isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
           </IconButton>
-          
-          <Typography sx={{ fontSize: "0.85rem", fontWeight: 600, ml: -0.5, mr: 1.5 }}>
-            {item.liked?.length || 0}
-          </Typography>
+          <Typography variant="subtitle2" sx={{ color: 'white' }}>{item.liked?.length || 0}</Typography>
 
-          <IconButton onClick={handleShowComment}>
-            <ChatBubbleIcon sx={{ fontSize: "1.4rem" }} />
+          <IconButton onClick={handleShowComment} sx={{ color: 'white' }}>
+            <ChatBubbleIcon sx={{ fontSize: '1.2rem' }} />
           </IconButton>
           
-          <IconButton><ShareIcon sx={{ fontSize: "1.4rem" }} /></IconButton>
-        </div>
-        <div>
-          <IconButton><BookmarkBorderIcon sx={{ fontSize: "1.4rem" }} /></IconButton>
-        </div>
+          <IconButton sx={{ color: 'white' }}><ShareIcon sx={{ fontSize: '1.2rem' }} /></IconButton>
+        </Box>
+        <IconButton sx={{ color: 'white' }}><BookmarkBorderIcon /></IconButton>
       </CardActions>
 
-      {/* COMMENTS SECTION */}
+      {/* COMMENTS: Neon/Dark Theme */}
       {showComments && (
-        <section className="bg-gray-50/50 pb-2">
-          <Divider />
-          <div className='flex items-center space-x-5 mx-4 my-4'>
-            <Avatar 
-                src={currentUser?.profileImage} 
-                sx={{ width: "1.8rem", height: "1.8rem", bgcolor: "#1d4ed8", fontSize: "0.7rem" }}
-            >
-                {currentUser?.firstName?.[0]}
-            </Avatar>
+        <Box sx={{ bgcolor: 'rgba(0,0,0,0.2)', pt: 1, pb: 2 }}>
+          <Divider sx={{ bgcolor: 'rgba(255,255,255,0.05)' }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, my: 2 }}>
+            <Avatar src={currentUser?.profileImage} sx={{ width: 32, height: 32, border: '1px solid #6366f1' }} />
             <input
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.target.value.trim() !== "") {
@@ -129,33 +103,35 @@ const PostCard = ({ item }) => {
                   e.target.value = ""; 
                 }
               }}
-              className='w-full outline-none bg-white border border-gray-200 rounded-full px-5 py-2 text-sm focus:border-blue-400'
-              type="text"
-              placeholder='Write a comment...'
+              style={{ 
+                width: '100%', 
+                backgroundColor: 'rgba(255,255,255,0.05)', 
+                border: '1px solid rgba(255,255,255,0.1)', 
+                borderRadius: '12px', 
+                padding: '10px 15px', 
+                color: 'white', 
+                outline: 'none' 
+              }}
+              placeholder='Add a transmission...'
             />
-          </div>
+          </Box>
 
-          <div className='px-4 space-y-3 max-h-[300px] overflow-y-auto no-scrollbar'>
-            {item.comments && item.comments.length > 0 ? (
+          <Box sx={{ px: 3, spaceY: 2, maxHeight: '250px', overflowY: 'auto' }} className="no-scrollbar">
+            {item.comments?.length > 0 ? (
               [...item.comments].reverse().map((comment, index) => (
-                <div key={comment.id || index} className='flex items-start space-x-3'>
-                  <Avatar 
-                    src={comment.user?.profileImage} 
-                    sx={{ height: "1.7rem", width: "1.7rem", fontSize: "0.7rem" }}
-                  >
-                    {comment.user?.firstName?.[0]}
-                  </Avatar>
-                  <div className='bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm max-w-[85%]'>
-                    <p className='text-[11px] font-bold text-gray-700'>{comment.user?.firstName}</p>
-                    <p className='text-sm text-gray-800'>{comment.content}</p>
-                  </div>
-                </div>
+                <Box key={comment.id || index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <Avatar src={comment.user?.profileImage} sx={{ height: 28, width: 28 }} />
+                  <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', px: 2, py: 1, borderRadius: '14px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#6366f1', display: 'block' }}>{comment.user?.firstName}</Typography>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>{comment.content}</Typography>
+                  </Box>
+                </Box>
               ))
             ) : (
-              <p className='text-gray-400 text-center py-2 text-xs'>No comments yet.</p>
+              <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>Silence in the thread.</Typography>
             )}
-          </div>
-        </section>
+          </Box>
+        </Box>
       )}
     </Card>
   );
