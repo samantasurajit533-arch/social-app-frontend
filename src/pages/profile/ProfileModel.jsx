@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Modal, Button, IconButton, Typography, TextField, Avatar } from '@mui/material';
+import { Box, Modal, Button, IconButton, Typography, TextField, Avatar, Backdrop } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import { useFormik } from 'formik';
@@ -7,22 +7,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateProfileAction } from '../../pages/Redux/Auth/auth.action';
 import { uploadToCloudniry } from '../../utils/uploadToCloudniry';
 
-// Responsive Material-UI sx Style Object
 const style = {
   position: 'absolute',
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  // Takes up full viewport width/height on mobile, regular container size on desktop
-  width: { xs: '100vw', sm: 600 },
-  height: { xs: '100vh', sm: 'auto' },
-  maxHeight: { xs: '100vh', sm: '90vh' },
+  width: { xs: '95vw', sm: 580 },
+  maxHeight: '90vh',
   overflowY: 'auto',
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: { xs: 2, sm: 3 },
+  // Glassmorphism logic
+  background: 'rgba(15, 23, 42, 0.95)', 
+  backdropFilter: 'blur(20px)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  boxShadow: '0 24px 50px rgba(0, 0, 0, 0.6)',
+  p: { xs: 2, sm: 4 },
   outline: "none",
-  borderRadius: { xs: 0, sm: 3 }, // Full-bleed screen style on mobile
+  borderRadius: "28px",
+  color: 'white'
 };
 
 export default function ProfileModel({ open, handleClose }) {
@@ -39,7 +40,6 @@ export default function ProfileModel({ open, handleClose }) {
       coverPhoto: user?.coverPhoto || ""
     },
     onSubmit: (values) => {
-      console.log("Submitting Profile Update:", values);
       dispatch(updateProfileAction(values));
       handleClose();
     }
@@ -50,11 +50,7 @@ export default function ProfileModel({ open, handleClose }) {
     try {
       const file = event.target.files;
       const imageUrl = await uploadToCloudniry(file, "image");
-
-      if (imageUrl) {
-        await formik.setFieldValue(fieldName, imageUrl);
-        console.log(`${fieldName} uploaded:`, imageUrl);
-      }
+      if (imageUrl) await formik.setFieldValue(fieldName, imageUrl);
     } catch (error) {
       console.error("Upload failed", error);
     } finally {
@@ -66,108 +62,106 @@ export default function ProfileModel({ open, handleClose }) {
     <Modal
       open={open}
       onClose={handleClose}
-      aria-labelledby="modal-modal-title"
-      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      slots={{ backdrop: Backdrop }}
+      slotProps={{ backdrop: { sx: { backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.4)' } } }}
     >
-      <Box sx={style}>
-        <form onSubmit={formik.handleSubmit} className="flex flex-col h-full">
+      <Box sx={style} className="no-scrollbar">
+        <form onSubmit={formik.handleSubmit}>
           
-          {/* Top Navigation / Header */}
-          <div className='flex items-center justify-between pb-2'>
-            <div className='flex items-center space-x-2'>
-              <IconButton onClick={handleClose} size="medium">
-                <CloseIcon />
-              </IconButton>
-              <Typography variant="h6" className="font-bold text-gray-900" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-                Edit Profile
+          {/* Header */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconButton onClick={handleClose} sx={{ color: 'white' }}><CloseIcon /></IconButton>
+              <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.5px' }}>
+                Identity Editor
               </Typography>
-            </div>
+            </Box>
             <Button 
               type="submit" 
-              variant="text" 
-              sx={{ fontWeight: 'bold', fontSize: { xs: '0.85rem', sm: '1rem' } }} 
               disabled={uploading}
+              sx={{ 
+                background: 'linear-gradient(45deg, #6366f1, #a855f7)',
+                color: 'white', fontWeight: 800, px: 3, borderRadius: '10px',
+                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
+                '&:hover': { background: 'linear-gradient(45deg, #4f46e5, #9333ea)' }
+              }} 
             >
-              {uploading ? "Uploading..." : "SAVE"}
+              {uploading ? "SYNCING..." : "UPDATE"}
             </Button>
-          </div>
+          </Box>
 
-          {/* Media Header Area */}
-          <div className='h-[10rem] sm:h-[15rem] relative mt-2 flex-shrink-0'>
-            <div className='w-full h-full relative bg-gray-100 rounded-md overflow-hidden'>
-              <img 
-                className='w-full h-full object-cover' 
-                src={formik.values.coverPhoto || "https://unsplash.com"} 
-                alt="cover" 
-              />
-              <input
-                accept="image/*"
-                id="cover-input"
-                type="file"
-                style={{ display: 'none' }}
-                onChange={(e) => handleImageChange(e, "coverPhoto")}
-              />
-              <label htmlFor="cover-input" className="absolute top-2 right-2">
-                <IconButton component="span" size="small" sx={{ bgcolor: "white", "&:hover": { bgcolor: "#f5f5f5" }, boxShadow: 2 }}>
-                  <AddPhotoAlternateIcon color="primary" fontSize="small" />
+          {/* Media Section */}
+          <Box sx={{ position: 'relative', mb: 10 }}>
+            {/* Cover Photo */}
+            <Box sx={{ height: { xs: '120px', sm: '180px' }, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '20px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src={formik.values.coverPhoto || "https://unsplash.com"} alt="cover" />
+              <input accept="image/*" id="cover-input" type="file" style={{ display: 'none' }} onChange={(e) => handleImageChange(e, "coverPhoto")} />
+              <label htmlFor="cover-input">
+                <IconButton component="span" sx={{ position: 'absolute', top: 12, right: 12, bgcolor: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(5px)', '&:hover': { bgcolor: '#6366f1' } }}>
+                  <AddPhotoAlternateIcon fontSize="small" />
                 </IconButton>
               </label>
-            </div>
+            </Box>
 
-            {/* Profile Avatar Frame */}
-            <div className='absolute -bottom-8 sm:-bottom-10 left-4 sm:left-5'>
-              <input
-                accept="image/*"
-                id="avatar-input"
-                type="file"
-                style={{ display: 'none' }}
-                onChange={(e) => handleImageChange(e, "profileImage")}
-              />
+            {/* Profile Picture */}
+            <Box sx={{ position: 'absolute', bottom: -50, left: 24 }}>
+              <input accept="image/*" id="avatar-input" type="file" style={{ display: 'none' }} onChange={(e) => handleImageChange(e, "profileImage")} />
               <label htmlFor="avatar-input">
                 <IconButton component="span" sx={{ p: 0 }}>
                   <Avatar 
                     src={formik.values.profileImage}
                     sx={{ 
-                        width: { xs: "5.5rem", sm: "8rem" }, 
-                        height: { xs: "5.5rem", sm: "8rem" }, 
-                        border: "4px solid white", 
-                        bgcolor: "#2196f3",
-                        boxShadow: 3,
-                        opacity: uploading ? 0.6 : 1
+                        width: { xs: 90, sm: 120 }, height: { xs: 90, sm: 120 }, 
+                        border: "6px solid #0f172a", bgcolor: "#6366f1",
+                        boxShadow: '0 0 25px rgba(99, 102, 241, 0.5)',
+                        opacity: uploading ? 0.5 : 1
                     }}
                   >
-                    {!formik.values.profileImage && user?.firstName?.[0]}
+                    {user?.firstName?.[0]}
                   </Avatar>
+                  <Box sx={{ position: 'absolute', bottom: 5, right: 5, bgcolor: '#6366f1', borderRadius: '50%', p: 0.5, border: '2px solid #0f172a' }}>
+                    <AddPhotoAlternateIcon sx={{ fontSize: 16, color: 'white' }} />
+                  </Box>
                 </IconButton>
               </label>
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          {/* Input Form Fields */}
-          <div className='mt-12 sm:mt-14 space-y-5 px-1 sm:px-3 pb-6 flex-1'>
+          {/* Form Fields */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 4 }}>
             <TextField
               fullWidth
-              id="firstName"
               name="firstName"
               label="First Name"
               value={formik.values.firstName}
               onChange={formik.handleChange}
-              variant="outlined"
-              size="medium"
+              sx={textFieldStyle}
             />
             <TextField
               fullWidth
-              id="lastName"
               name="lastName"
               label="Last Name"
               value={formik.values.lastName}
               onChange={formik.handleChange}
-              variant="outlined"
-              size="medium"
+              sx={textFieldStyle}
             />
-          </div>
+          </Box>
         </form>
       </Box>
     </Modal>
   );
 }
+
+// Custom Glass-style for TextFields
+const textFieldStyle = {
+  '& label': { color: 'rgba(255,255,255,0.4)', fontWeight: 600 },
+  '& label.Mui-focused': { color: '#6366f1' },
+  '& .MuiOutlinedInput-root': {
+    color: 'white',
+    bgcolor: 'rgba(255,255,255,0.03)',
+    borderRadius: '14px',
+    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+    '&.Mui-focused fieldset': { borderColor: '#6366f1' },
+  },
+};

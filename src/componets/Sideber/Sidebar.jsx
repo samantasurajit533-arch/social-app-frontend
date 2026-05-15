@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { navigationMenu } from './SidebarNavigation'
-import { Avatar, Button, Divider, Menu, MenuItem, Drawer, Box, Typography, IconButton } from '@mui/material'
+import { Avatar, Divider, Menu, MenuItem, Drawer, Box, Typography, IconButton } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -30,14 +30,23 @@ const Sidebar = () => {
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
-      h: '100%', 
+      height: '100vh', // FIXED: Changed h: '100%' to height: '100vh'
       py: 3, 
       px: 2,
       bgcolor: 'transparent',
-      color: 'white'
+      color: 'white',
+      overflow: 'hidden' // Prevents the whole sidebar from having a double scrollbar
     }}>
-      <Box>
-        {/* SNAP TALK LOGO: Unique Gradient Style */}
+      {/* TOP SECTION: Logo and Nav Links */}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflowY: 'auto', // Allows links to scroll if there are too many
+        flexGrow: 1,
+        pr: 1
+      }} className="no-scrollbar">
+        
+        {/* LOGO */}
         <Box sx={{ pb: 6, px: 2 }}>
           <Typography variant="h4" sx={{ 
             fontWeight: 900, 
@@ -51,6 +60,7 @@ const Sidebar = () => {
           </Typography>
         </Box>
 
+        {/* NAVIGATION LINKS */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {navigationMenu.map((item, index) => {
             const isActive = location.pathname === item.path;
@@ -80,18 +90,30 @@ const Sidebar = () => {
         </Box>
       </Box>
 
-      {/* USER PROFILE SECTION */}
-      <Box sx={{ pt: 2, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+      {/* BOTTOM SECTION: USER PROFILE (Pinned to bottom) */}
+      <Box sx={{ 
+        pt: 2, 
+        mt: 2, 
+        borderTop: '1px solid rgba(255,255,255,0.1)' // Stronger border for visibility
+      }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={user?.profileImage} sx={{ width: 42, height: 42, border: '2px solid #6366f1' }}>
+            <Avatar 
+                src={user?.profileImage} 
+                sx={{ 
+                    width: 42, 
+                    height: 42, 
+                    border: '2px solid #6366f1',
+                    bgcolor: '#6366f1' 
+                }}
+            >
               {user?.firstName?.[0]}
             </Avatar>
             <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1 }}>
-                {user ? `${user.firstName}` : "User"}
+              <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.2 }}>
+                {user ? `${user.firstName} ${user.lastName || ''}` : "User"}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', display: 'block' }}>
                 {user ? `@${user.firstName.toLowerCase()}` : "@active"}
               </Typography>
             </Box>
@@ -114,50 +136,57 @@ const Sidebar = () => {
         position: 'sticky', 
         top: 0, 
         width: '260px',
-        bgcolor: 'transparent'
+        bgcolor: 'transparent',
+        borderRight: '1px solid rgba(255,255,255,0.05)'
       }}>
         {SidebarContent}
       </Box>
 
-      {/* MOBILE BOTTOM NAV: Glassmorphism Floating Style */}
+      {/* MOBILE BOTTOM NAV: Floating Glass Pill */}
       <Box sx={{ 
         display: { xs: 'flex', md: 'none' }, 
-        fixed: 'bottom', 
-        bottom: 15, 
+        bottom: 20, // Floating off the bottom
         left: '5%', 
         width: '90%', 
         position: 'fixed',
-        background: 'rgba(15, 23, 42, 0.8)', 
-        backdropFilter: 'blur(15px)', 
+        background: 'rgba(15, 23, 42, 0.9)', 
+        backdropFilter: 'blur(20px)', 
         borderRadius: '24px', 
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid rgba(255,255,255,0.15)',
         px: 1, 
         py: 1, 
         justifyContent: 'space-around', 
         alignItems: 'center', 
-        zIndex: 1000,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+        zIndex: 1100,
+        boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
       }}>
         <IconButton onClick={() => navigate("/")} sx={{ color: location.pathname === "/" ? "#6366f1" : "white" }}>🏠</IconButton>
         <IconButton onClick={() => navigate("/reels")} sx={{ color: location.pathname === "/reels" ? "#6366f1" : "white" }}>🎬</IconButton>
         
-        {/* CENTER ACTION BUTTON */}
         <Box onClick={() => navigate("/create-reels")} sx={{ 
           background: 'linear-gradient(45deg, #6366f1, #a855f7)', 
           borderRadius: '16px', 
           p: 1, 
           display: 'flex', 
-          boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)' 
+          cursor: 'pointer'
         }}>
           <Typography sx={{ fontSize: '1.5rem', color: 'white' }}>➕</Typography>
         </Box>
 
         <IconButton onClick={() => navigate(`/message/${user?.id}`)} sx={{ color: location.pathname.includes("/message") ? "#6366f1" : "white" }}>✉️</IconButton>
+        
         <Avatar 
           onClick={() => setMobileOpen(true)} 
           src={user?.profileImage} 
-          sx={{ width: 30, height: 30, cursor: 'pointer', border: '2px solid #6366f1' }}
-        />
+          sx={{ 
+              width: 32, 
+              height: 32, 
+              cursor: 'pointer', 
+              border: location.pathname.includes("/profile") ? '2px solid #6366f1' : '2px solid transparent' 
+          }}
+        >
+            {user?.firstName?.[0]}
+        </Avatar>
       </Box>
 
       {/* MOBILE DRAWER */}
@@ -165,14 +194,34 @@ const Sidebar = () => {
         anchor="left" 
         open={mobileOpen} 
         onClose={() => setMobileOpen(false)} 
-        PaperProps={{ sx: { width: "280px", bgcolor: '#0f172a', backgroundImage: 'none' } }}
+        PaperProps={{ 
+            sx: { 
+                width: "280px", 
+                bgcolor: '#0f172a', 
+                backgroundImage: 'none',
+                borderRight: '1px solid rgba(255,255,255,0.1)' 
+            } 
+        }}
       >
         {SidebarContent}
       </Drawer>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)} PaperProps={{ sx: { bgcolor: '#1e293b', color: 'white' } }}>
-        <MenuItem onClick={() => { setAnchorEl(null); navigate(`/profile/${user?.id}`); }}>Profile</MenuItem>
-        <MenuItem onClick={handleLogout} sx={{ color: '#ef4444' }}>Logout</MenuItem>
+      <Menu 
+        anchorEl={anchorEl} 
+        open={Boolean(anchorEl)} 
+        onClose={() => setAnchorEl(null)} 
+        PaperProps={{ 
+            sx: { 
+                bgcolor: '#1e293b', 
+                color: 'white',
+                minWidth: '150px',
+                mt: -2
+            } 
+        }}
+      >
+        <MenuItem onClick={() => { setAnchorEl(null); navigate(`/profile/${user?.id}`); }}>View Profile</MenuItem>
+        <Divider sx={{ bgcolor: 'rgba(255,255,255,0.05)' }} />
+        <MenuItem onClick={handleLogout} sx={{ color: '#ef4444' }}>Sign Out</MenuItem>
       </Menu>
     </>
   )
