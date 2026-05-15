@@ -40,22 +40,26 @@ export const loginUserAction = (loginData) => async (dispatch) => {
   }
 };
 
-// 2. STEP 1 OTP: Request Verification Email
+
+
 export const requestOtpAction = (userData, setStep) => async (dispatch) => {
-  dispatch({ type: REGISTER_REQUEST }); // Uses standard register loading state
+  dispatch({ type: REGISTER_REQUEST }); 
   try {
     const { data } = await api.post("/auth/signup/request", userData);
     console.log("OTP Sent:", data);
+
+   
+    dispatch({ type: REGISTER_SUCCESS, payload: null }); 
     
-    // Switch the UI form panel to display the 6-digit OTP input step
     setStep(2); 
   } catch (error) {
     const errorMsg = error.response?.data || error.message;
     console.error("OTP Request Error:", errorMsg);
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg); // Inform user if email already exists
+    alert(errorMsg);
   }
 };
+
 
 // 3. STEP 2 OTP: Verify Code and Finalize Registration
 export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {

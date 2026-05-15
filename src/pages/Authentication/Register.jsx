@@ -6,7 +6,8 @@ import {
   TextField,
   FormLabel,
   Typography,
-  Box
+  Box,
+  CircularProgress
 } from '@mui/material';
 import { Formik, Form } from 'formik';
 import React, { useState } from 'react';
@@ -39,21 +40,21 @@ const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  // Connect to global Redux state to display dynamic loading indicators
-  const { loading } = useSelector((state) => state.auth || state);
+  // Get loading state from Redux to disable buttons during API calls
+  const { loading } = useSelector((state) => state.auth);
 
-  // Layout Step Tracker: 1 = Form Input Details, 2 = 6-Digit OTP Box Entry
+  // UI State: step 1 is Details, step 2 is OTP Input
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState("");
   const [savedEmail, setSavedEmail] = useState("");
 
-  // Step 1: Submit Formik Profile data to get email verification code
+  // Step 1: Submit Details to trigger OTP Email
   const handleFormikSubmit = (values) => {
-    setSavedEmail(values.email); // Temporarily track user email parameter for Step 2
+    setSavedEmail(values.email); 
     dispatch(requestOtpAction(values, setStep));
   };
 
-  // Step 2: Deliver 6-digit key token payload matching destination user email 
+  // Step 2: Submit OTP for Final Registration
   const handleOtpVerifySubmit = (e) => {
     e.preventDefault();
     if (otp.length !== 6) {
@@ -64,22 +65,16 @@ const Register = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 450, margin: "0 auto", padding: 2 }}>
+    <Box sx={{ maxWidth: 450, margin: "2rem auto", padding: 3, boxShadow: 3, borderRadius: 2 }}>
       {step === 1 ? (
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
           onSubmit={handleFormikSubmit}
         >
-          {({
-            values,
-            handleChange,
-            handleBlur,
-            errors,
-            touched
-          }) => (
+          {({ values, handleChange, handleBlur, errors, touched }) => (
             <Form className="space-y-5">
-              <Typography variant="h5" fontWeight="bold" gutterBottom>
+              <Typography variant="h5" fontWeight="bold" align="center" gutterBottom>
                 Create Account
               </Typography>
 
@@ -129,52 +124,46 @@ const Register = () => {
                 helperText={touched.password && errors.password}
               />
 
-              <div>
+              <Box>
                 <FormLabel>Gender</FormLabel>
-                <RadioGroup
-                  row
-                  name="gender"
-                  value={values.gender}
-                  onChange={handleChange}
-                >
+                <RadioGroup row name="gender" value={values.gender} onChange={handleChange}>
                   <FormControlLabel value="female" control={<Radio />} label="Female" />
                   <FormControlLabel value="male" control={<Radio />} label="Male" />
                 </RadioGroup>
                 {touched.gender && errors.gender && (
-                  <div className="text-red-500 text-sm">{errors.gender}</div>
+                  <Typography color="error" variant="caption">{errors.gender}</Typography>
                 )}
-              </div>
+              </Box>
 
               <Button
                 fullWidth
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                sx={{ padding: ".8rem 0rem" }}
+                sx={{ padding: ".8rem 0rem", mt: 2 }}
               >
-                {loading ? "Sending OTP..." : "Get Verification Code"}
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Get Verification Code"}
               </Button>
             </Form>
           )}
         </Formik>
       ) : (
-        // Step 2 panel: Triggers once requestOtpAction fires setStep(2)
-        <Box component="form" onSubmit={handleOtpVerifySubmit} className="space-y-5">
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
-            Verify Identity
+        <Box component="form" onSubmit={handleOtpVerifySubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Typography variant="h5" fontWeight="bold" align="center">
+            Verify Email
           </Typography>
           
-          <Typography variant="body2" color="textSecondary">
-            A secure 6-digit validation code was sent to: <strong>{savedEmail}</strong>
+          <Typography variant="body2" color="textSecondary" align="center">
+            Enter the 6-digit code sent to: <br/> <strong>{savedEmail}</strong>
           </Typography>
 
           <TextField
-            label="6-Digit OTP Code"
+            label="6-Digit OTP"
             fullWidth
+            variant="outlined"
             value={otp}
-            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} // Numbers only validation
-            inputProps={{ maxLength: 6 }}
-            placeholder="000000"
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+            inputProps={{ maxLength: 6, style: { textAlign: 'center', letterSpacing: '10px', fontSize: '1.5rem' } }}
             required
           />
 
@@ -195,7 +184,7 @@ const Register = () => {
             onClick={() => setStep(1)}
             disabled={loading}
           >
-            ← Back to Profile Form
+            ← Back to Details
           </Button>
         </Box>
       )}
