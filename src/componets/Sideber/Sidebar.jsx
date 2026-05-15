@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { navigationMenu } from './SidebarNavigation'
-import { Avatar, Button, Divider, Menu, MenuItem, Drawer, Box, Typography } from '@mui/material'
+import { Avatar, Button, Divider, Menu, MenuItem, Drawer, Box, Typography, IconButton } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
