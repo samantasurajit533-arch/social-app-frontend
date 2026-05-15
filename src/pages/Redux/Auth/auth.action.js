@@ -55,11 +55,10 @@ export const requestOtpAction = (userData, setStep) => async (dispatch) => {
 };
 
 
-// 3. STEP 2 OTP: Verify Code and Finalize Registration
 export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
-    // Send as params instead of a long string URL
+    // We send 'null' as the body because data goes into 'params'
     const { data } = await api.post("/auth/signup/verify", null, {
       params: {
         email: verificationData.email,
@@ -81,15 +80,13 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
 };
 
 
+
 // 4. Fetch Profile Action (Cleaned trailing base URL out of path)
-export const getProfileAction = (jwt) => async (dispatch) => {
+// Cleaned version using your new interceptor
+export const getProfileAction = () => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
-    const res = await api.get("/api/users/profile", {
-      headers: { Authorization: `Bearer ${jwt}` },
-    });
-
-    console.log("DEBUG DATA FROM BACKEND:", res.data);
+    const res = await api.get("/api/users/profile"); // Interceptor adds the token automatically!
     dispatch({ type: GET_PROFILE_SUCCESS, payload: res.data });
   } catch (error) {
     dispatch({ type: GET_PROFILE_FAILURE, payload: error.message });
