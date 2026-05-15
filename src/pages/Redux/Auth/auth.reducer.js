@@ -7,7 +7,6 @@ import {
   SEARCH_USER_REQUEST, SEARCH_USER_SUCCESS, SEARCH_USER_FAILURE 
 } from "../auth.actionType";
 
-// Define a logout action type natively to handle session termination
 export const LOGOUT = "LOGOUT";
 
 const initialState = {
@@ -22,7 +21,7 @@ const initialState = {
 export const authReducer = (state = initialState, action) => {
   switch (action.type) {
     case LOGIN_REQUEST:
-    case REGISTER_REQUEST: // Automatically captures both Step 1 and Step 2 OTP loading triggers
+    case REGISTER_REQUEST:
     case GET_PROFILE_REQUEST:
     case UPDATE_PROFILE_REQUEST:
     case GET_USER_BY_ID_REQUEST:
@@ -40,18 +39,18 @@ export const authReducer = (state = initialState, action) => {
       return { ...state, reqUser: action.payload, loading: false, error: null };
 
     case LOGIN_SUCCESS:
-    case REGISTER_SUCCESS: // Automatically triggers when OTP validation checks pass successfully
-      return { ...state, jwt: action.payload, loading: false, error: null };
+    case REGISTER_SUCCESS: 
+      // Reset loading to false and update JWT (if present in payload)
+      return { ...state, jwt: action.payload || state.jwt, loading: false, error: null };
 
     case LOGIN_FAILURE:
-    case REGISTER_FAILURE: // Catches invalid verification input or pre-existing duplicate email flags
+    case REGISTER_FAILURE:
     case GET_PROFILE_FAILURE:
     case UPDATE_PROFILE_FAILURE:
     case GET_USER_BY_ID_FAILURE:
     case SEARCH_USER_FAILURE: 
       return { ...state, loading: false, error: action.payload };
 
-    // New: Handle global clean slate reset when a user logs out
     case LOGOUT:
       localStorage.removeItem("jwt");
       return { ...initialState, jwt: null };

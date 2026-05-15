@@ -40,25 +40,22 @@ export const loginUserAction = (loginData) => async (dispatch) => {
   }
 };
 
-
-
 export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST }); 
   try {
     const { data } = await api.post("/auth/signup/request", userData);
-    console.log("OTP Sent:", data);
-
-   
+    
+    // FIX: This stops the loading spinner so Step 2 can show up
     dispatch({ type: REGISTER_SUCCESS, payload: null }); 
     
     setStep(2); 
   } catch (error) {
-    const errorMsg = error.response?.data || error.message;
-    console.error("OTP Request Error:", errorMsg);
+    const errorMsg = error.response?.data || "Email already exists";
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
     alert(errorMsg);
   }
 };
+
 
 
 // 3. STEP 2 OTP: Verify Code and Finalize Registration
