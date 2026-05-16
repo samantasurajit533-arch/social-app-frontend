@@ -23,20 +23,45 @@ import {
 
 // 1. Sign In Action (Switched to api instance for mobile compatibility)
 export const loginUserAction = (loginData) => async (dispatch) => {
+
   dispatch({ type: LOGIN_REQUEST });
+
   try {
-    const { data } = await api.post("/auth/signin", loginData.data);
+
+    const { data } = await api.post(
+      "/auth/signin",
+      loginData.data
+    );
 
     if (data.token) {
+
       localStorage.setItem("jwt", data.token);
-      dispatch({ type: LOGIN_SUCCESS, payload: data.token });
-      dispatch(getProfileAction(data.token));
+
+      dispatch({
+        type: LOGIN_SUCCESS,
+        payload: data.token,
+      });
+
+      dispatch(getProfileAction());
+
       loginData.navigate("/");
     }
+
   } catch (error) {
-    const errorMsg = error.response?.data?.message || error.message;
+
+    console.error("FULL LOGIN ERROR:", error);
+
+    const errorMsg =
+      error.response?.data?.message ||
+      error.response?.data ||
+      error.message;
+
     console.error("Login Error:", errorMsg);
-    dispatch({ type: LOGIN_FAILURE, payload: errorMsg });
+
+    dispatch({
+      type: LOGIN_FAILURE,
+      payload: errorMsg,
+    });
   }
 };
 

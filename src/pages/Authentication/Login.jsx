@@ -1,7 +1,7 @@
 import { Button, TextField, Box, Typography } from '@mui/material';
 import { Formik, Form } from 'formik';
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux'; // Added useSelector
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import * as Yup from "yup";
 import { loginUserAction } from '../Redux/Auth/auth.action';
@@ -22,26 +22,36 @@ const validationSchema = Yup.object({
 });
 
 const Login = () => {
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // Connect to global Redux state to handle network loading indicators
-  const { loading } = useSelector((state) => state.auth || state);
+  // safer selector (prevents crash if state shape changes)
+  const loading = useSelector((state) => state.auth?.loading);
 
   const handleSubmit = (values) => {
-    // Pass the payload values and navigate hook down to your custom api interceptor thunk
-    dispatch(loginUserAction({ data: values, navigate }));
+
+    dispatch(
+      loginUserAction({
+        data: values,
+        navigate
+      })
+    );
   };
 
   return (
     <Box sx={{ maxWidth: 450, margin: "0 auto", padding: 2 }}>
+
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
         onSubmit={handleSubmit}
       >
+
         {({ values, handleChange, handleBlur, errors, touched }) => (
-          <Form className="space-y-5">
+
+          <Form>
+
             <Typography variant="h5" fontWeight="bold" gutterBottom>
               Login
             </Typography>
@@ -56,6 +66,7 @@ const Login = () => {
               onBlur={handleBlur}
               error={touched.email && Boolean(errors.email)}
               helperText={touched.email && errors.email}
+              margin="normal"
             />
 
             <TextField
@@ -68,20 +79,22 @@ const Login = () => {
               onBlur={handleBlur}
               error={touched.password && Boolean(errors.password)}
               helperText={touched.password && errors.password}
+              margin="normal"
             />
 
             <Button
               fullWidth
               type="submit"
               variant="contained"
-              disabled={loading} // Disables button while authentication network request is pending
-              sx={{ padding: ".8rem 0rem" }}
+              disabled={loading}
+              sx={{ mt: 2, py: 1.2 }}
             >
               {loading ? "Authenticating..." : "Login"}
             </Button>
 
           </Form>
         )}
+
       </Formik>
     </Box>
   );
