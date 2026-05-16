@@ -1,23 +1,22 @@
 import { Box, Button, CircularProgress, Typography, IconButton } from '@mui/material';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Video, Loader2, Image as ImageIcon, CheckCircle2, X, Sparkles, Wand2 } from 'lucide-react'; // Added Wand2
-import axios from 'axios'; // Import axios
+import { Video, Loader2, Image as ImageIcon, CheckCircle2, X, Sparkles, Wand2 } from 'lucide-react';
+import axios from 'axios';
 import { uploadToCloudniry } from '../../utils/uploadToCloudniry';
 import { createReelAction } from '../../pages/Redux/Post/post.action';
 
-// Using your Railway base URL
 const API_BASE_URL = "https://social-app-backend-production-c81c.up.railway.app";
 
 const CreateReelsForm = () => {
   const [videoUrl, setVideoUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false); // New AI Loading state
+  const [aiLoading, setAiLoading] = useState(false); 
   const [showSuccess, setShowSuccess] = useState(false); 
   const dispatch = useDispatch();
 
-  // --- New AI Caption Function ---
+  // Secure AI Caption Retrieval 
   const handleAiGenerate = async () => {
     if (!caption.trim()) {
       alert("Please type a few keywords first (e.g., beach, sunset)!");
@@ -26,9 +25,15 @@ const CreateReelsForm = () => {
     
     setAiLoading(true);
     try {
-      // Calling your direct Spring AI Controller
+      // Pulling active user token from storage to pass backend filter gates
+      const token = localStorage.getItem("jwt"); 
+      
       const response = await axios.get(`${API_BASE_URL}/api/ai/generate-caption`, {
-        params: { keywords: caption }
+        params: { keywords: caption },
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
       });
       
       if (response.data) {
@@ -36,7 +41,7 @@ const CreateReelsForm = () => {
       }
     } catch (error) {
       console.error("AI Generation failed:", error);
-      alert("AI Service currently unavailable. Check your backend settings.");
+      alert("The AI pipeline is currently re-authenticating. Please try again.");
     } finally {
       setAiLoading(false);
     }
@@ -70,7 +75,7 @@ const CreateReelsForm = () => {
 
   return (
     <Box sx={{ 
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyWContent: 'center', 
       minHeight: '100vh', p: { xs: 2, md: 4 }, bgcolor: '#07090d' 
     }}>
       
@@ -92,7 +97,7 @@ const CreateReelsForm = () => {
         width: '100%', maxWidth: '900px', boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
       }}>
         
-        {/* Left: Preview */}
+        {/* Left: Preview Frame */}
         <Box sx={{ width: { xs: '100%', md: '300px' }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <Box sx={{ 
             position: 'relative', aspectRatio: '9/16', width: '260px', 
@@ -123,25 +128,25 @@ const CreateReelsForm = () => {
           </Box>
         </Box>
 
-        {/* Right Side: Details */}
+        {/* Right Side: Inputs */}
         <Box sx={{ flex: 1, pt: 2 }}>
           <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Sparkles color="#6366f1" size={24} />
-            <Typography variant="h5" sx={{ fontWeight: 900 }}>Create New Reel</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 900, color: 'white' }}>Create New Reel</Typography>
           </Box>
 
           <Box sx={{ mb: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
               <Typography variant="caption" sx={{ fontWeight: 800, color: 'rgba(255,255,255,0.3)', letterSpacing: '1px' }}>CAPTION</Typography>
               
-              {/* --- NEW: AI GENERATE BUTTON --- */}
               <Button 
                 onClick={handleAiGenerate}
-                disabled={aiLoading}
+                disabled={aiLoading || uploading}
                 startIcon={aiLoading ? <CircularProgress size={12} color="inherit" /> : <Wand2 size={14} />}
                 sx={{ 
                   fontSize: '0.65rem', fontWeight: 900, color: '#6366f1', 
-                  textTransform: 'uppercase', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.1)' } 
+                  textTransform: 'uppercase', '&:hover': { bgcolor: 'rgba(99, 102, 241, 0.1)' },
+                  '&:disabled': { color: 'rgba(255,255,255,0.2)' }
                 }}
               >
                 {aiLoading ? "AI Processing..." : "Write with AI"}
@@ -150,10 +155,12 @@ const CreateReelsForm = () => {
 
             <textarea
               placeholder="Enter keywords and click 'Write with AI'..."
+              disabled={aiLoading}
               style={{
                 width: '100%', height: '180px', backgroundColor: 'rgba(0,0,0,0.2)',
                 border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px',
-                padding: '20px', color: 'white', fontSize: '1rem', outline: 'none', resize: 'none'
+                padding: '20px', color: 'white', fontSize: '1rem', outline: 'none', resize: 'none',
+                opacity: aiLoading ? 0.5 : 1, transition: 'all 0.3s'
               }}
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
@@ -162,11 +169,12 @@ const CreateReelsForm = () => {
 
           <Button 
             fullWidth onClick={handleCreateReel}
-            disabled={!videoUrl || uploading || !caption}
+            disabled={!videoUrl || uploading || !caption || aiLoading}
             sx={{ 
               py: 2, borderRadius: '16px', fontWeight: 800,
               background: 'linear-gradient(45deg, #6366f1, #a855f7)', color: 'white',
               boxShadow: '0 10px 30px rgba(99, 102, 241, 0.3)',
+              '&:disabled': { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)', boxShadow: 'none' }
             }}
           >
             {showSuccess ? "TRANSMITTED" : "POST TO FEED"}
