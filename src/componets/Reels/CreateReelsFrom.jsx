@@ -16,36 +16,34 @@ const CreateReelsForm = () => {
   const [showSuccess, setShowSuccess] = useState(false); 
   const dispatch = useDispatch();
 
-  // Secure AI Caption Retrieval 
   const handleAiGenerate = async () => {
-    if (!caption.trim()) {
-      alert("Please type a few keywords first (e.g., beach, sunset)!");
-      return;
-    }
+  if (!caption.trim()) {
+    alert("Please type a few keywords first (e.g., beach, sunset)!");
+    return;
+  }
+  setAiLoading(true);
+  try {
+    const token = localStorage.getItem("jwt"); 
     
-    setAiLoading(true);
-    try {
-      // Pulling active user token from storage to pass backend filter gates
-      const token = localStorage.getItem("jwt"); 
-      
-      const response = await axios.get(`${API_BASE_URL}/api/ai/generate-caption`, {
-        params: { keywords: caption },
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-      
-      if (response.data) {
-        setCaption(response.data);
+    const response = await axios.get(`${API_BASE_URL}/api/ai/generate-caption`, {
+      params: { keywords: caption },
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
       }
-    } catch (error) {
-      console.error("AI Generation failed:", error);
-      alert("The AI pipeline is currently re-authenticating. Please try again.");
-    } finally {
-      setAiLoading(false);
+    });
+    
+    // UPDATED: Destructure the structured JSON object payload cleanly
+    if (response.data && response.data.caption) {
+      setCaption(response.data.caption);
     }
-  };
+  } catch (error) {
+    console.error("AI Generation failed:", error);
+    alert("AI generation failed. Please ensure Vertex AI API is enabled inside your GCP Console project.");
+  } finally {
+    setAiLoading(false);
+  }
+};
 
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0]; 
