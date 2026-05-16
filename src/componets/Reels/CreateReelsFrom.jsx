@@ -16,24 +16,17 @@ const CreateReelsForm = () => {
   const [showSuccess, setShowSuccess] = useState(false); 
   const dispatch = useDispatch();
 
-  const handleAiGenerate = async () => {
+ const handleAiGenerate = async () => {
   if (!caption.trim()) {
     alert("Please type a few keywords first (e.g., beach, sunset)!");
     return;
   }
   setAiLoading(true);
   try {
-    const token = localStorage.getItem("jwt"); 
-    
     const response = await axios.get(`${API_BASE_URL}/api/ai/generate-caption`, {
-      params: { keywords: caption },
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
+      params: { keywords: caption }
     });
     
-    // UPDATED: Destructure the structured JSON object payload cleanly
     if (response.data && response.data.caption) {
       setCaption(response.data.caption);
     }
@@ -44,6 +37,7 @@ const CreateReelsForm = () => {
     setAiLoading(false);
   }
 };
+
 
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0]; 
