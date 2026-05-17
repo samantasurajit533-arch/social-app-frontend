@@ -21,42 +21,35 @@ import {
 } from "../auth.actionType";
 
 
-// 1. Sign In Action (Switched to api instance for mobile compatibility)
+// 1. Sign In Action (Fixed Token Field to data.jwt)
 export const loginUserAction = (loginData) => async (dispatch) => {
-
   dispatch({ type: LOGIN_REQUEST });
 
   try {
-
     const { data } = await api.post(
       "/auth/signin",
       loginData.data
     );
 
-    if (data.token) {
-
-      localStorage.setItem("jwt", data.token);
+    // ✅ FIX: data.token এর পরিবর্তে data.jwt চেক করা হচ্ছে
+    if (data && data.jwt) {
+      localStorage.setItem("jwt", data.jwt);
 
       dispatch({
         type: LOGIN_SUCCESS,
-        payload: data.token,
+        payload: data.jwt,
       });
 
       dispatch(getProfileAction());
-
       loginData.navigate("/");
     }
 
   } catch (error) {
-
     console.error("FULL LOGIN ERROR:", error);
-
     const errorMsg =
       error.response?.data?.message ||
       error.response?.data ||
       error.message;
-
-    console.error("Login Error:", errorMsg);
 
     dispatch({
       type: LOGIN_FAILURE,
@@ -65,25 +58,22 @@ export const loginUserAction = (loginData) => async (dispatch) => {
   }
 };
 
+// 2. Request OTP Action
 export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
     await api.post("/auth/signup/request", userData);
-    
-    // STOP LOADING HERE
     dispatch({ type: REGISTER_SUCCESS, payload: null }); 
-    
     setStep(2); 
   } catch (error) {
     dispatch({ type: REGISTER_FAILURE, payload: error.response?.data });
   }
 };
 
-
+// 3. Verify OTP And Register (Fixed Token Field to data.jwt)
 export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
-    // We send 'null' as the body because data goes into 'params'
     const { data } = await api.post("/auth/signup/verify", null, {
       params: {
         email: verificationData.email,
@@ -91,10 +81,11 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
       }
     });
 
-    if (data.token) {
-      localStorage.setItem("jwt", data.token);
-      dispatch({ type: REGISTER_SUCCESS, payload: data.token });
-      dispatch(getProfileAction(data.token));
+    // ✅ FIX: এখানেও data.token এর পরিবর্তে data.jwt ব্যবহার করা হয়েছে
+    if (data && data.jwt) {
+      localStorage.setItem("jwt", data.jwt);
+      dispatch({ type: REGISTER_SUCCESS, payload: data.jwt });
+      dispatch(getProfileAction());
       verificationData.navigate("/");
     }
   } catch (error) {
@@ -104,53 +95,45 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
   }
 };
 
-
-
-// 4. Fetch Profile Action (Cleaned trailing base URL out of path)
-// Cleaned version using your new interceptor
+// 4. Fetch Profile Action
 export const getProfileAction = () => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
-    const res = await api.get("/api/users/profile"); // Interceptor adds the token automatically!
+    const res = await api.get("/api/users/profile"); 
     dispatch({ type: GET_PROFILE_SUCCESS, payload: res.data });
   } catch (error) {
     dispatch({ type: GET_PROFILE_FAILURE, payload: error.message });
   }
 };
 
-// 5. Update Profile Action (Switched to api instance)
+// 5. Update Profile Action
 export const updateProfileAction = (reqData) => async (dispatch) => {
   dispatch({ type: UPDATE_PROFILE_REQUEST });
   try {
     const res = await api.put("/api/users", reqData);
-    console.log("Update Success:", res.data);
     dispatch({ type: UPDATE_PROFILE_SUCCESS, payload: res.data });
   } catch (error) {
-    console.log("Detailed Error:", error.response?.data?.message || error.message);
     dispatch({ type: UPDATE_PROFILE_FAILURE, payload: error.message });
   }
 };
 
-// 6. Find User Action (Switched to api instance)
+// 6. Find User Action
 export const findUserByIdAction = (userId) => async (dispatch) => {
   dispatch({ type: GET_USER_BY_ID_REQUEST });
   try {
     const { data } = await api.get(`/api/users/${userId}`);
-    console.log("FIND USER BY ID SUCCESS:", data);
     dispatch({ type: GET_USER_BY_ID_SUCCESS, payload: data });
   } catch (error) {
     const errorMsg = error.response?.data?.message || error.message;
-    console.error("Find User Error:", errorMsg);
     dispatch({ type: GET_USER_BY_ID_FAILURE, payload: errorMsg });
   }
 };
 
-// 7. Search User Action (Switched to api instance)
+// 7. Search User Action
 export const searchUserAction = (query) => async (dispatch) => {
   dispatch({ type: SEARCH_USER_REQUEST });
   try {
     const { data } = await api.get(`/api/users/search?query=${query}`);
-    console.log("SEARCH USER SUCCESS:", data);
     dispatch({ type: SEARCH_USER_SUCCESS, payload: data });
   } catch (error) {
     const errorMsg = error.response?.data?.message || error.message;
