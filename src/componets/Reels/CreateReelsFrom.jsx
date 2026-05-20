@@ -6,7 +6,8 @@ import axios from 'axios';
 import { uploadToCloudniry } from '../../utils/uploadToCloudniry';
 import { createReelAction } from '../../pages/Redux/Post/post.action';
 
-const API_BASE_URL = "https://social-app-backend-production-c81c.up.railway.app";
+const API_BASE_URL = "https://social-app-backend-pogv.onrender.com";
+
 
 const CreateReelsForm = () => {
   const [videoUrl, setVideoUrl] = useState("");

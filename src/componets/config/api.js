@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const API_BASE_URL =
-  "https://social-app-backend-production-c81c.up.railway.app";
+  "https://social-app-backend-pogv.onrender.com";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
