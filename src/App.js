@@ -18,9 +18,7 @@ const uniqueTheme = createTheme({
       main: '#6366f1',
     },
   },
-  shape: {
-    borderRadius: 20,
-  },
+  shape: { borderRadius: 20 },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -48,25 +46,26 @@ function App() {
   const dispatch = useDispatch();
   const { jwt, user, loading } = useSelector(state => state.auth);
 
-  // ✅ Read token once — from Redux state OR localStorage
+  // ✅ Always read fresh from localStorage too
   const token = jwt || localStorage.getItem("jwt");
 
   useEffect(() => {
-    // ✅ Runs ONCE on mount only — no dependencies that change
-    if (token && token !== "null") {
+    // ✅ Runs when jwt changes in Redux (after login/register)
+    // AND on first mount (for page refresh with existing token)
+    const freshToken = localStorage.getItem("jwt");
+    if (freshToken && freshToken !== "null" && !user) {
       dispatch(getProfileAction());
     }
-  }, []); // ← empty array: never loops
+  }, [jwt]); // ✅ re-runs when jwt updates after login/register
 
-  // ✅ Show loading only on first app load
   if (loading && token && !user) {
     return (
       <ThemeProvider theme={uniqueTheme}>
         <CssBaseline />
         <Box sx={{ 
-          display: 'flex', flexDirection: 'column', 
-          justifyContent: 'center', alignItems: 'center', 
-          height: '100vh', gap: 2 
+          display: 'flex', flexDirection: 'column',
+          justifyContent: 'center', alignItems: 'center',
+          height: '100vh', gap: 2
         }}>
           <CircularProgress color="primary" />
           <Typography variant="h6" sx={{ letterSpacing: '2px', fontWeight: 'light' }}>

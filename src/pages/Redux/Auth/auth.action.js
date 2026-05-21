@@ -10,16 +10,47 @@ import {
 
 
 // 1. Sign In Action
+// 3. Verify OTP And Register
+export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
+  dispatch({ type: REGISTER_REQUEST });
+  try {
+    const { data } = await api.post("/auth/signup/verify", null, {
+      params: {
+        email: verificationData.email,
+        otp: verificationData.otp
+      }
+    });
+
+    if (data && data.token) {
+      localStorage.setItem("jwt", data.token);
+      dispatch({ type: REGISTER_SUCCESS, payload: data.token });
+      await dispatch(getProfileAction()); // ✅ wait for profile before navigating
+      verificationData.navigate("/");
+    } else {
+      dispatch({ type: REGISTER_FAILURE, payload: "No token received." });
+      alert("Verification failed. Please try again.");
+    }
+
+  } catch (error) {
+    const errorMsg =
+      error.response?.data?.message ||
+      error.response?.data ||
+      "Verification Failed";
+    dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
+    alert(errorMsg);
+  }
+};
+
+// 1. Sign In Action
 export const loginUserAction = (loginData) => async (dispatch) => {
   dispatch({ type: LOGIN_REQUEST });
   try {
     const { data } = await api.post("/auth/signin", loginData.data);
 
-    // ✅ signin returns { jwt: "..." }
     if (data && data.jwt) {
       localStorage.setItem("jwt", data.jwt);
       dispatch({ type: LOGIN_SUCCESS, payload: data.jwt });
-      dispatch(getProfileAction());
+      await dispatch(getProfileAction()); // ✅ wait for profile before navigating
       loginData.navigate("/");
     } else {
       dispatch({ type: LOGIN_FAILURE, payload: "Login failed. No token received." });
@@ -27,7 +58,6 @@ export const loginUserAction = (loginData) => async (dispatch) => {
     }
 
   } catch (error) {
-    console.error("FULL LOGIN ERROR:", error);
     const errorMsg =
       error.response?.data?.error ||
       error.response?.data?.message ||
@@ -38,6 +68,7 @@ export const loginUserAction = (loginData) => async (dispatch) => {
     alert(errorMsg);
   }
 };
+
 
 
 // 2. Request OTP Action
@@ -59,35 +90,6 @@ export const requestOtpAction = (userData, setStep) => async (dispatch) => {
 
 
 // 3. Verify OTP And Register
-export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
-  dispatch({ type: REGISTER_REQUEST });
-  try {
-    const { data } = await api.post("/auth/signup/verify", null, {
-      params: {
-        email: verificationData.email,
-        otp: verificationData.otp
-      }
-    });
-
-    if (data && data.token) {
-      localStorage.setItem("jwt", data.token);
-      dispatch({ type: REGISTER_SUCCESS, payload: data.token });
-      dispatch(getProfileAction());
-      verificationData.navigate("/");
-    } else {
-      dispatch({ type: REGISTER_FAILURE, payload: "No token received." });
-      alert("Verification failed. Please try again.");
-    }
-
-  } catch (error) {
-    const errorMsg =
-      error.response?.data?.message ||
-      error.response?.data ||
-      "Verification Failed";
-    dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg);
-  }
-};
 
 
 // 4. Fetch Profile
