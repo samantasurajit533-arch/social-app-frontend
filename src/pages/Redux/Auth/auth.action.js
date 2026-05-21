@@ -92,6 +92,9 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
 
 // 4. Fetch Profile
 export const getProfileAction = () => async (dispatch) => {
+  const token = localStorage.getItem("jwt");
+  if (!token) return; // ✅ guard — don't call if no token
+
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
     const res = await api.get("/api/users/profile");

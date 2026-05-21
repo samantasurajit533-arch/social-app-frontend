@@ -4,25 +4,22 @@ import Authentication from "./pages/Authentication/Authentication";
 import { Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { getProfileAction } from "./pages/Redux/Auth/auth.action";
-
-// UI Imports
 import { Typography, Box, CircularProgress, CssBaseline } from "@mui/material";
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 
-// 1. Define a Unique Modern Theme
 const uniqueTheme = createTheme({
   palette: {
     mode: 'dark',
     background: {
-      default: '#07090d', // Deep Midnight
-      paper: '#111827',   // Slate Blue
+      default: '#07090d',
+      paper: '#111827',
     },
     primary: {
-      main: '#6366f1', // Electric Indigo
+      main: '#6366f1',
     },
   },
   shape: {
-    borderRadius: 20, // Bold Rounded Corners for all components
+    borderRadius: 20,
   },
   components: {
     MuiButton: {
@@ -39,7 +36,7 @@ const uniqueTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: 'rgba(17, 24, 39, 0.8)',
-          backdropFilter: 'blur(12px)', // Glass effect
+          backdropFilter: 'blur(12px)',
           border: '1px solid rgba(255, 255, 255, 0.05)',
         },
       },
@@ -49,20 +46,28 @@ const uniqueTheme = createTheme({
 
 function App() {
   const dispatch = useDispatch();
-  const auth = useSelector(state => state.auth);
-  const jwt = auth.jwt || localStorage.getItem("jwt");
+  const { jwt, user, loading } = useSelector(state => state.auth);
+
+  // ✅ Read token once — from Redux state OR localStorage
+  const token = jwt || localStorage.getItem("jwt");
 
   useEffect(() => {
-    if (jwt && jwt !== "null" && !auth.user && !auth.error) {
-      dispatch(getProfileAction(jwt));
+    // ✅ Runs ONCE on mount only — no dependencies that change
+    if (token && token !== "null") {
+      dispatch(getProfileAction());
     }
-  }, [jwt, auth.user, auth.error, dispatch]);
+  }, []); // ← empty array: never loops
 
-  if (auth.loading && jwt && !auth.user && !auth.error) {
+  // ✅ Show loading only on first app load
+  if (loading && token && !user) {
     return (
       <ThemeProvider theme={uniqueTheme}>
         <CssBaseline />
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', gap: 2 }}>
+        <Box sx={{ 
+          display: 'flex', flexDirection: 'column', 
+          justifyContent: 'center', alignItems: 'center', 
+          height: '100vh', gap: 2 
+        }}>
           <CircularProgress color="primary" />
           <Typography variant="h6" sx={{ letterSpacing: '2px', fontWeight: 'light' }}>
             SYNCHRONISING...
@@ -77,8 +82,8 @@ function App() {
       <CssBaseline />
       <div className="App">
         <Routes>
-          {!jwt || jwt === "null" ? (
-            <Route path="/*" element={<Authentication />} /> 
+          {!token || token === "null" ? (
+            <Route path="/*" element={<Authentication />} />
           ) : (
             <Route path="/*" element={<HomePage />} />
           )}
