@@ -1,23 +1,11 @@
 import { api } from "../../../componets/config/api";
 import {
-  GET_PROFILE_FAILURE,
-  GET_PROFILE_REQUEST,
-  GET_PROFILE_SUCCESS,
-  GET_USER_BY_ID_FAILURE,
-  GET_USER_BY_ID_REQUEST,
-  GET_USER_BY_ID_SUCCESS,
-  LOGIN_FAILURE,
-  LOGIN_REQUEST,
-  LOGIN_SUCCESS,
-  REGISTER_FAILURE,
-  REGISTER_REQUEST,
-  REGISTER_SUCCESS,
-  SEARCH_USER_FAILURE,
-  SEARCH_USER_REQUEST,
-  SEARCH_USER_SUCCESS,
-  UPDATE_PROFILE_FAILURE,
-  UPDATE_PROFILE_REQUEST,
-  UPDATE_PROFILE_SUCCESS,
+  GET_PROFILE_FAILURE, GET_PROFILE_REQUEST, GET_PROFILE_SUCCESS,
+  GET_USER_BY_ID_FAILURE, GET_USER_BY_ID_REQUEST, GET_USER_BY_ID_SUCCESS,
+  LOGIN_FAILURE, LOGIN_REQUEST, LOGIN_SUCCESS,
+  REGISTER_FAILURE, REGISTER_REQUEST, REGISTER_SUCCESS,
+  SEARCH_USER_FAILURE, SEARCH_USER_REQUEST, SEARCH_USER_SUCCESS,
+  UPDATE_PROFILE_FAILURE, UPDATE_PROFILE_REQUEST, UPDATE_PROFILE_SUCCESS,
 } from "../auth.actionType";
 
 
@@ -27,13 +15,13 @@ export const loginUserAction = (loginData) => async (dispatch) => {
   try {
     const { data } = await api.post("/auth/signin", loginData.data);
 
+    // ✅ signin returns { jwt: "..." }
     if (data && data.jwt) {
       localStorage.setItem("jwt", data.jwt);
       dispatch({ type: LOGIN_SUCCESS, payload: data.jwt });
       dispatch(getProfileAction());
       loginData.navigate("/");
     } else {
-      // ✅ Handle missing jwt in response
       dispatch({ type: LOGIN_FAILURE, payload: "Login failed. No token received." });
       alert("Login failed. Please try again.");
     }
@@ -41,14 +29,13 @@ export const loginUserAction = (loginData) => async (dispatch) => {
   } catch (error) {
     console.error("FULL LOGIN ERROR:", error);
     const errorMsg =
-      error.response?.data?.error ||   // ✅ backend sends { error: "..." }
+      error.response?.data?.error ||
       error.response?.data?.message ||
       error.response?.data ||
       error.message ||
       "Login Failed";
-
     dispatch({ type: LOGIN_FAILURE, payload: errorMsg });
-    alert(errorMsg); // ✅ shows "Invalid email or password"
+    alert(errorMsg);
   }
 };
 
@@ -59,16 +46,14 @@ export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   try {
     await api.post("/auth/signup/request", userData);
     dispatch({ type: REGISTER_SUCCESS, payload: null });
-    setStep(2); // ✅ move to OTP screen only on success
-
+    setStep(2);
   } catch (error) {
     const errorMsg =
       error.response?.data?.message ||
-      error.response?.data ||           // ✅ backend sends plain string "Email already exists"
+      error.response?.data ||
       "Registration Failed";
-
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg); // ✅ shows "Email already exists" to user
+    alert(errorMsg);
   }
 };
 
@@ -84,13 +69,12 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
       }
     });
 
-    if (data && data.jwt) {
-      localStorage.setItem("jwt", data.jwt);
-      dispatch({ type: REGISTER_SUCCESS, payload: data.jwt });
+    if (data && data.token) {
+      localStorage.setItem("jwt", data.token);
+      dispatch({ type: REGISTER_SUCCESS, payload: data.token });
       dispatch(getProfileAction());
       verificationData.navigate("/");
     } else {
-      // ✅ Handle missing jwt in response
       dispatch({ type: REGISTER_FAILURE, payload: "No token received." });
       alert("Verification failed. Please try again.");
     }
@@ -98,11 +82,10 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
   } catch (error) {
     const errorMsg =
       error.response?.data?.message ||
-      error.response?.data ||           // ✅ backend sends plain string
+      error.response?.data ||
       "Verification Failed";
-
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg); // ✅ shows "OTP invalid or expired"
+    alert(errorMsg);
   }
 };
 
