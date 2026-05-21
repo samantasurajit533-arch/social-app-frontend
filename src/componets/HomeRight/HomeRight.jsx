@@ -14,7 +14,7 @@ const HomeRight = () => {
   useEffect(() => {
     // Initial search for suggestions
     dispatch(searchUserAction("a")); 
-  }, [dispatch]);
+  }, []);
 
   // Filter out the current logged-in user from the suggestions list
   const suggestions = searchUser?.filter(user => user.id !== currentUser?.id) || [];
