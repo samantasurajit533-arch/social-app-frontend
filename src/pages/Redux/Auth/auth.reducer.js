@@ -38,10 +38,15 @@ export const authReducer = (state = initialState, action) => {
     case GET_USER_BY_ID_SUCCESS:
       return { ...state, reqUser: action.payload, loading: false, error: null };
 
+    // ✅ FIXED: jwt is now saved to state
     case LOGIN_SUCCESS:
     case REGISTER_SUCCESS:
-  return { ...state, loading: false };
-
+      return { 
+        ...state, 
+        loading: false, 
+        jwt: action.payload,
+        error: null 
+      };
 
     case LOGIN_FAILURE:
     case REGISTER_FAILURE:

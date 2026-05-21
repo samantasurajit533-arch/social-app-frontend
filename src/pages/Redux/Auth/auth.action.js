@@ -81,21 +81,24 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
       }
     });
 
-    // ✅ FIX: এখানেও data.token এর পরিবর্তে data.jwt ব্যবহার করা হয়েছে
     if (data && data.jwt) {
       localStorage.setItem("jwt", data.jwt);
       dispatch({ type: REGISTER_SUCCESS, payload: data.jwt });
       dispatch(getProfileAction());
       verificationData.navigate("/");
+    } else {
+      dispatch({ type: REGISTER_FAILURE, payload: "No token received." });
+      alert("Verification failed. Please try again.");
     }
+
   } catch (error) {
-    const errorMsg = error.response?.data || "Verification Failed";
+    const errorMsg = error.response?.data?.message 
+      || error.response?.data 
+      || "Verification Failed";
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
     alert(errorMsg);
   }
 };
-
-// 4. Fetch Profile Action
 export const getProfileAction = () => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
