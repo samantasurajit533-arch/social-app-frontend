@@ -62,7 +62,7 @@ export const loginUserAction = (loginData) => async (dispatch) => {
 export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
-    await api.post("/auth/signup/request", userData);
+    await api.post("/auth/signup/request", userData); 
     dispatch({ type: REGISTER_SUCCESS, payload: null }); 
     setStep(2); 
   } catch (error) {
