@@ -21,56 +21,59 @@ import {
 } from "../auth.actionType";
 
 
-// 1. Sign In Action (Fixed Token Field to data.jwt)
+// 1. Sign In Action
 export const loginUserAction = (loginData) => async (dispatch) => {
   dispatch({ type: LOGIN_REQUEST });
-
   try {
-    const { data } = await api.post(
-      "/auth/signin",
-      loginData.data
-    );
+    const { data } = await api.post("/auth/signin", loginData.data);
 
-    // ✅ FIX: data.token এর পরিবর্তে data.jwt চেক করা হচ্ছে
     if (data && data.jwt) {
       localStorage.setItem("jwt", data.jwt);
-
-      dispatch({
-        type: LOGIN_SUCCESS,
-        payload: data.jwt,
-      });
-
+      dispatch({ type: LOGIN_SUCCESS, payload: data.jwt });
       dispatch(getProfileAction());
       loginData.navigate("/");
+    } else {
+      // ✅ Handle missing jwt in response
+      dispatch({ type: LOGIN_FAILURE, payload: "Login failed. No token received." });
+      alert("Login failed. Please try again.");
     }
 
   } catch (error) {
     console.error("FULL LOGIN ERROR:", error);
     const errorMsg =
+      error.response?.data?.error ||   // ✅ backend sends { error: "..." }
       error.response?.data?.message ||
       error.response?.data ||
-      error.message;
+      error.message ||
+      "Login Failed";
 
-    dispatch({
-      type: LOGIN_FAILURE,
-      payload: errorMsg,
-    });
+    dispatch({ type: LOGIN_FAILURE, payload: errorMsg });
+    alert(errorMsg); // ✅ shows "Invalid email or password"
   }
 };
+
 
 // 2. Request OTP Action
 export const requestOtpAction = (userData, setStep) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
-    await api.post("/auth/signup/request", userData); 
-    dispatch({ type: REGISTER_SUCCESS, payload: null }); 
-    setStep(2); 
+    await api.post("/auth/signup/request", userData);
+    dispatch({ type: REGISTER_SUCCESS, payload: null });
+    setStep(2); // ✅ move to OTP screen only on success
+
   } catch (error) {
-    dispatch({ type: REGISTER_FAILURE, payload: error.response?.data });
+    const errorMsg =
+      error.response?.data?.message ||
+      error.response?.data ||           // ✅ backend sends plain string "Email already exists"
+      "Registration Failed";
+
+    dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
+    alert(errorMsg); // ✅ shows "Email already exists" to user
   }
 };
 
-// 3. Verify OTP And Register (Fixed Token Field to data.jwt)
+
+// 3. Verify OTP And Register
 export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch) => {
   dispatch({ type: REGISTER_REQUEST });
   try {
@@ -87,27 +90,34 @@ export const verifyOtpAndRegisterAction = (verificationData) => async (dispatch)
       dispatch(getProfileAction());
       verificationData.navigate("/");
     } else {
+      // ✅ Handle missing jwt in response
       dispatch({ type: REGISTER_FAILURE, payload: "No token received." });
       alert("Verification failed. Please try again.");
     }
 
   } catch (error) {
-    const errorMsg = error.response?.data?.message 
-      || error.response?.data 
-      || "Verification Failed";
+    const errorMsg =
+      error.response?.data?.message ||
+      error.response?.data ||           // ✅ backend sends plain string
+      "Verification Failed";
+
     dispatch({ type: REGISTER_FAILURE, payload: errorMsg });
-    alert(errorMsg);
+    alert(errorMsg); // ✅ shows "OTP invalid or expired"
   }
 };
+
+
+// 4. Fetch Profile
 export const getProfileAction = () => async (dispatch) => {
   dispatch({ type: GET_PROFILE_REQUEST });
   try {
-    const res = await api.get("/api/users/profile"); 
+    const res = await api.get("/api/users/profile");
     dispatch({ type: GET_PROFILE_SUCCESS, payload: res.data });
   } catch (error) {
     dispatch({ type: GET_PROFILE_FAILURE, payload: error.message });
   }
 };
+
 
 // 5. Update Profile Action
 export const updateProfileAction = (reqData) => async (dispatch) => {
@@ -120,7 +130,8 @@ export const updateProfileAction = (reqData) => async (dispatch) => {
   }
 };
 
-// 6. Find User Action
+
+// 6. Find User By ID Action
 export const findUserByIdAction = (userId) => async (dispatch) => {
   dispatch({ type: GET_USER_BY_ID_REQUEST });
   try {
@@ -131,6 +142,7 @@ export const findUserByIdAction = (userId) => async (dispatch) => {
     dispatch({ type: GET_USER_BY_ID_FAILURE, payload: errorMsg });
   }
 };
+
 
 // 7. Search User Action
 export const searchUserAction = (query) => async (dispatch) => {
