@@ -26,7 +26,7 @@ const MiddlePart = () => {
   useEffect(() => {
     dispatch(getAllPostAction());
     dispatch(getAllStoriesAction());
-  }, [dispatch]);
+  }, []);
 
   return (
     <Box sx={{ width: '100%', py: 2 }}>

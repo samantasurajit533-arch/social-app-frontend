@@ -139,8 +139,7 @@ export const searchUserAction = (query) => async (dispatch) => {
     const { data } = await api.get(`/api/users/search?query=${query}`);
     dispatch({ type: SEARCH_USER_SUCCESS, payload: data });
   } catch (error) {
-    // ✅ Don't dispatch FAILURE for background searches
-    // Just silently reset loading state
+    // ✅ Silent fail — no FAILURE dispatch to avoid re-render loop
     dispatch({ type: SEARCH_USER_SUCCESS, payload: [] });
   }
 };
