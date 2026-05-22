@@ -44,21 +44,25 @@ const uniqueTheme = createTheme({
 
 function App() {
   const dispatch = useDispatch();
+
+  // ✅ Read jwt from Redux state — updates reactively after login/register
   const { jwt, user, loading } = useSelector(state => state.auth);
 
-  // ✅ Always read fresh from localStorage too
+  // ✅ Derive token from Redux jwt OR localStorage (for page refresh)
   const token = jwt || localStorage.getItem("jwt");
+  const isValidToken = token && token !== "null" && token !== "undefined";
 
   useEffect(() => {
-    // ✅ Runs when jwt changes in Redux (after login/register)
-    // AND on first mount (for page refresh with existing token)
+    // ✅ Runs on mount AND when jwt changes in Redux after login/register
     const freshToken = localStorage.getItem("jwt");
-    if (freshToken && freshToken !== "null" && !user) {
+    const isValid = freshToken && freshToken !== "null" && freshToken !== "undefined";
+    if (isValid && !user) {
       dispatch(getProfileAction());
     }
-  }, [jwt]); // ✅ re-runs when jwt updates after login/register
+  }, [jwt]); // ✅ jwt from Redux — triggers after REGISTER_SUCCESS/LOGIN_SUCCESS
 
-  if (loading && token && !user) {
+  // ✅ Show loading screen only during initial profile fetch
+  if (loading && isValidToken && !user) {
     return (
       <ThemeProvider theme={uniqueTheme}>
         <CssBaseline />
@@ -81,7 +85,8 @@ function App() {
       <CssBaseline />
       <div className="App">
         <Routes>
-          {!token || token === "null" ? (
+          {/* ✅ Uses isValidToken — reacts to jwt changes from Redux */}
+          {!isValidToken ? (
             <Route path="/*" element={<Authentication />} />
           ) : (
             <Route path="/*" element={<HomePage />} />

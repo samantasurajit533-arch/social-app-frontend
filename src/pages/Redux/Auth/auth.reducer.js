@@ -20,13 +20,18 @@ const initialState = {
 
 export const authReducer = (state = initialState, action) => {
   switch (action.type) {
+
+    // ✅ User-triggered loading only
     case LOGIN_REQUEST:
     case REGISTER_REQUEST:
-    case GET_PROFILE_REQUEST:
     case UPDATE_PROFILE_REQUEST:
-    case GET_USER_BY_ID_REQUEST:
-    case SEARCH_USER_REQUEST: 
       return { ...state, loading: true, error: null };
+
+    // ✅ Background fetches - NO loading:true to avoid re-render loop
+    case GET_PROFILE_REQUEST:
+    case GET_USER_BY_ID_REQUEST:
+    case SEARCH_USER_REQUEST:
+      return { ...state, error: null }; // ← no loading change
 
     case GET_PROFILE_SUCCESS:
     case UPDATE_PROFILE_SUCCESS:
@@ -38,7 +43,6 @@ export const authReducer = (state = initialState, action) => {
     case GET_USER_BY_ID_SUCCESS:
       return { ...state, reqUser: action.payload, loading: false, error: null };
 
-    // ✅ FIXED: jwt is now saved to state
     case LOGIN_SUCCESS:
     case REGISTER_SUCCESS:
       return { 
