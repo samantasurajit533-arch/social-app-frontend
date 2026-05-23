@@ -1,136 +1,281 @@
-import { Avatar, Card, CardActions, CardContent, CardHeader, CardMedia, Divider, IconButton, Typography, Box } from '@mui/material';
+import { Avatar, Card, Typography, Box, IconButton } from '@mui/material';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShareIcon from '@mui/icons-material/Share';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useDispatch, useSelector } from 'react-redux';
 import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post.action';
 
 const PostCard = ({ item }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // 2. Initialize useNavigate
   const [showComments, setShowComments] = useState(false);
+  const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
 
   const handleLikePost = () => dispatch(likePostAction(item.id));
   const isLiked = item.liked?.some((user) => user.id === currentUser?.id);
   const handleShowComment = () => setShowComments(!showComments);
-
   const handleCreateComment = (content) => {
     dispatch(createCommentAction({ postId: item.id, data: { content } }));
   };
 
+  // 3. Handle navigation safely
+  const handleUserProfileClick = () => {
+    if (item?.user?.id) {
+      navigate(`/profile/${item.user.id}`);
+    }
+  };
+
   const getSecureUrl = (url) => url?.replace("http://", "https://");
-  const isVideo = (url) => url?.includes("/video/") || url?.match(/\.(mp4|mov|avi|wmv|webm)$/) !== null;
+  const isVideo = (url) => url?.includes("/video/") || url?.match(/\.(mp4|mov|avi|wmv|webm)\$/) !== null;
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 60000);
+    if (diff < 1) return "just now";
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return `${Math.floor(diff / 1440)}d ago`;
+  };
 
   if (!item) return null;
 
   return (
-    <Card sx={{ 
-      borderRadius: '24px', 
-      background: 'rgba(30, 41, 59, 0.6)', 
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.08)',
-      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-      mb: 4,
-      overflow: 'hidden'
+    <Card sx={{
+      borderRadius: '20px',
+      background: '#0f1724',
+      border: '1px solid rgba(255,255,255,0.06)',
+      boxShadow: '0 2px 20px rgba(0,0,0,0.3)',
+      mb: 3,
+      overflow: 'hidden',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      '&:hover': {
+        transform: 'translateY(-2px)',
+        boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+      }
     }}>
-      <CardHeader
-        avatar={
-          <Avatar src={item.user?.profileImage} sx={{ border: '2px solid #6366f1' }}>
+
+      {/* ── HEADER ── */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5, pb: 1.5 }}>
+        
+        {/* Wrap Avatar and Name together to make them clickable */}
+        <Box 
+          onClick={handleUserProfileClick}
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1.5, 
+            cursor: 'pointer', // Show pointer cursor on hover
+            '&:hover .user-name': { color: '#6366f1' } // Subtle color change on hover
+          }}
+        >
+          <Avatar
+            src={item.user?.profileImage}
+            sx={{
+              width: 42, height: 42,
+              border: '2px solid rgba(99,102,241,0.6)',
+              fontSize: '0.9rem',
+              transition: 'opacity 0.2s',
+              '&:hover': { opacity: 0.85 }
+            }}
+          >
             {!item.user?.profileImage && item.user?.firstName?.[0]}
           </Avatar>
-        }
-        action={<IconButton sx={{ color: 'white' }}><MoreVertIcon /></IconButton>}
-        title={<Typography sx={{ fontWeight: 700, color: 'white' }}>{item.user ? `${item.user.firstName} ${item.user.lastName}` : "User"}</Typography>}
-        subheader={<Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{`@${item.user?.firstName?.toLowerCase()}`}</Typography>}
-      />
-      
-      {/* MEDIA: Rounded with Padding for "Bento" look */}
-      <Box sx={{ px: 2 }}>
-        <Box sx={{ 
-          width: '100%', 
-          borderRadius: '16px', 
-          overflow: 'hidden', 
-          bgcolor: 'rgba(0,0,0,0.2)',
-          display: 'flex',
-          justifyContent: 'center'
-        }}>
-          {item.image && (
-            isVideo(item.image) ? (
-              <video controls muted loop playsInline className="w-full max-h-[500px] object-contain" src={getSecureUrl(item.image)} />
-            ) : (
-              <CardMedia component="img" image={getSecureUrl(item.image)} alt="content" sx={{ maxHeight: '500px', width: "100%", objectFit: 'cover' }} />
-            )
-          )}
+          <Box>
+            <Typography 
+              className="user-name"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                color: 'white',
+                lineHeight: 1.2,
+                transition: 'color 0.2s'
+              }}
+            >
+              {item.user ? `${item.user.firstName} ${item.user.lastName}` : "User"}
+            </Typography>
+            <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)' }}>
+              @{item.user?.firstName?.toLowerCase()} · {formatTime(item.createdAt)}
+            </Typography>
+          </Box>
         </Box>
+        
+        <IconButton sx={{ color: 'rgba(255,255,255,0.3)', '&:hover': { color: 'white' } }}>
+          <MoreVertIcon fontSize="small" />
+        </IconButton>
       </Box>
 
-      <CardContent>
-        <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.8)', fontSize: "0.95rem", lineHeight: 1.6 }}>
-          {item.caption}
-        </Typography>
-      </CardContent>
-
-      <CardActions sx={{ px: 2, pb: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton onClick={handleLikePost} sx={{ color: isLiked ? '#ef4444' : 'white' }}>
-            {isLiked ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-          </IconButton>
-          <Typography variant="subtitle2" sx={{ color: 'white' }}>{item.liked?.length || 0}</Typography>
-
-          <IconButton onClick={handleShowComment} sx={{ color: 'white' }}>
-            <ChatBubbleIcon sx={{ fontSize: '1.2rem' }} />
-          </IconButton>
-          
-          <IconButton sx={{ color: 'white' }}><ShareIcon sx={{ fontSize: '1.2rem' }} /></IconButton>
+      {/* ── CAPTION ── */}
+      {item.caption && (
+        <Box sx={{ px: 2.5, pb: 1.5 }}>
+          <Typography sx={{
+            color: 'rgba(255,255,255,0.75)',
+            fontSize: '0.92rem',
+            lineHeight: 1.6,
+            fontWeight: 400
+          }}>
+            {item.caption}
+          </Typography>
         </Box>
-        <IconButton sx={{ color: 'white' }}><BookmarkBorderIcon /></IconButton>
-      </CardActions>
+      )}
 
-      {/* COMMENTS: Neon/Dark Theme */}
+      {/* ── MEDIA ── */}
+      {item.image && (
+        <Box sx={{ px: 2, pb: 1 }}>
+          <Box sx={{
+            borderRadius: '14px',
+            overflow: 'hidden',
+            bgcolor: 'rgba(0,0,0,0.3)',
+          }}>
+            {isVideo(item.image) ? (
+              <video
+                controls muted loop playsInline
+                style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', display: 'block' }}
+                src={getSecureUrl(item.image)}
+              />
+            ) : (
+              <img
+                src={getSecureUrl(item.image)}
+                alt="post"
+                style={{ width: '100%', maxHeight: '480px', objectFit: 'cover', display: 'block' }}
+              />
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* ── ACTIONS ── */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        px: 2, py: 1
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+
+          {/* Like */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              onClick={handleLikePost}
+              sx={{
+                color: isLiked ? '#ef4444' : 'rgba(255,255,255,0.4)',
+                '&:hover': { color: '#ef4444', bgcolor: 'rgba(239,68,68,0.08)' },
+                transition: '0.2s'
+              }}
+            >
+              {isLiked ? <FavoriteIcon sx={{ fontSize: '1.3rem' }} /> : <FavoriteBorderIcon sx={{ fontSize: '1.3rem' }} />}
+            </IconButton>
+            <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
+              {item.liked?.length || 0}
+            </Typography>
+          </Box>
+
+          {/* Comment */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              onClick={handleShowComment}
+              sx={{
+                color: showComments ? '#6366f1' : 'rgba(255,255,255,0.4)',
+                '&:hover': { color: '#6366f1', bgcolor: 'rgba(99,102,241,0.08)' },
+                transition: '0.2s'
+              }}
+            >
+              <ChatBubbleOutlineIcon sx={{ fontSize: '1.2rem' }} />
+            </IconButton>
+            <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
+              {item.comments?.length || 0}
+            </Typography>
+          </Box>
+
+          {/* Share */}
+          <IconButton sx={{
+            color: 'rgba(255,255,255,0.4)',
+            '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.05)' },
+            transition: '0.2s'
+          }}>
+            <ShareIcon sx={{ fontSize: '1.2rem' }} />
+          </IconButton>
+        </Box>
+
+        {/* Bookmark */}
+        <IconButton
+          onClick={() => setSaved(!saved)}
+          sx={{
+            color: saved ? '#6366f1' : 'rgba(255,255,255,0.4)',
+            '&:hover': { color: '#6366f1', bgcolor: 'rgba(99,102,241,0.08)' },
+            transition: '0.2s'
+          }}
+        >
+          {saved ? <BookmarkIcon sx={{ fontSize: '1.2rem' }} /> : <BookmarkBorderIcon sx={{ fontSize: '1.2rem' }} />}
+        </IconButton>
+      </Box>
+
+      {/* ── COMMENTS SECTION ── */}
       {showComments && (
-        <Box sx={{ bgcolor: 'rgba(0,0,0,0.2)', pt: 1, pb: 2 }}>
-          <Divider sx={{ bgcolor: 'rgba(255,255,255,0.05)' }} />
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, my: 2 }}>
-            <Avatar src={currentUser?.profileImage} sx={{ width: 32, height: 32, border: '1px solid #6366f1' }} />
+        <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', mx: 2, pb: 2 }}>
+
+          {/* Comment Input */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
+            <Avatar
+              src={currentUser?.profileImage}
+              sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
+            />
             <input
               onKeyDown={(e) => {
                 if (e.key === "Enter" && e.target.value.trim() !== "") {
                   handleCreateComment(e.target.value);
-                  e.target.value = ""; 
+                  e.target.value = "";
                 }
               }}
-              style={{ 
-                width: '100%', 
-                backgroundColor: 'rgba(255,255,255,0.05)', 
-                border: '1px solid rgba(255,255,255,0.1)', 
-                borderRadius: '12px', 
-                padding: '10px 15px', 
-                color: 'white', 
-                outline: 'none' 
+              placeholder="Write a comment..."
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '20px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '0.85rem',
+                outline: 'none',
               }}
-              placeholder='Add a transmission...'
             />
           </Box>
-
-          <Box sx={{ px: 3, spaceY: 2, maxHeight: '250px', overflowY: 'auto' }} className="no-scrollbar">
-            {item.comments?.length > 0 ? (
-              [...item.comments].reverse().map((comment, index) => (
-                <Box key={comment.id || index} sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                  <Avatar src={comment.user?.profileImage} sx={{ height: 28, width: 28 }} />
-                  <Box sx={{ bgcolor: 'rgba(255,255,255,0.05)', px: 2, py: 1, borderRadius: '14px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#6366f1', display: 'block' }}>{comment.user?.firstName}</Typography>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>{comment.content}</Typography>
+                  {/* Render Existing Comments */}
+          {item.comments && item.comments.length > 0 && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '250px', overflowY: 'auto', mt: 1 }}>
+              {item.comments.map((comment, index) => (
+                <Box key={comment.id || index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                  {/* Make comment user clickable too */}
+                  <Avatar 
+                    onClick={() => comment.user?.id && navigate(`/profile/${comment.user.id}`)}
+                    src={comment.user?.profileImage} 
+                    sx={{ width: 28, height: 28, fontSize: '0.75rem', cursor: 'pointer' }}
+                  >
+                    {!comment.user?.profileImage && comment.user?.firstName?.[0]}
+                  </Avatar>
+                  <Box sx={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', p: 1, flex: 1 }}>
+                    <Typography
+                      onClick={() => comment.user?.id && navigate(`/profile/${comment.user.id}`)}
+                      sx={{ color: 'white', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                    >
+                      {comment.user ? `${comment.user.firstName} ${comment.user.lastName}` : "User"}
+                    </Typography>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem', mt: 0.5 }}>
+                      {comment.content}
+                    </Typography>
                   </Box>
                 </Box>
-              ))
-            ) : (
-              <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>Silence in the thread.</Typography>
-            )}
-          </Box>
+              ))}
+            </Box>
+          )}
         </Box>
       )}
     </Card>
