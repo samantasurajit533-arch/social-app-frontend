@@ -74,14 +74,6 @@ const CreateReelsForm = () => {
       setShowSuccess(false);
     }, 2500);
   };// Old code — same alert for everything
-alert(errMsg);
-
-// New code — detects 429 specifically
-if (status === 429) {
-  setQuotaHit(true);       // show retry UI
-  startRetryCountdown(15); // wait 15s before retry
-  showToast('quota', '...');
-}
 
 
  
