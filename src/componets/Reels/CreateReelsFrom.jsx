@@ -74,6 +74,9 @@ const CreateReelsForm = () => {
       setShowSuccess(false);
     }, 2500);
   };
+  if (response.status === 429) {
+  alert("AI is busy right now. Please wait a moment and try again! ⏳");
+}
 
   return (
     <Box sx={{
