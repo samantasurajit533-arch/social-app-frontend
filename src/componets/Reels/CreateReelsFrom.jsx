@@ -73,10 +73,18 @@ const CreateReelsForm = () => {
       setVideoUrl("");
       setShowSuccess(false);
     }, 2500);
-  };
-  if (response.status === 429) {
-  alert("AI is busy right now. Please wait a moment and try again! ⏳");
+  };// Old code — same alert for everything
+alert(errMsg);
+
+// New code — detects 429 specifically
+if (status === 429) {
+  setQuotaHit(true);       // show retry UI
+  startRetryCountdown(15); // wait 15s before retry
+  showToast('quota', '...');
 }
+
+
+ 
 
   return (
     <Box sx={{
