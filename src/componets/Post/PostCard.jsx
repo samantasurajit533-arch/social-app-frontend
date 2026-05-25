@@ -59,13 +59,21 @@ const PostCard = ({ item }) => {
 
   
       handleCreateComment(trimmedComment);
+       fetch(`${BACKEND_URL}/api/ai/mood/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userId: currentUser.id,
+        recentComments: trimmedComment,
+        scrolledCategories: "general:10s" 
+      }),
+    }).catch(err => console.error("Silent mood tracking failed", err));
 
-    } catch (error) {
-      console.error("Toxicity check failed:", error);
-      
-      handleCreateComment(trimmedComment);
-    }
-  };
+  } catch (error) {
+    console.error("Process failed:", error);
+    handleCreateComment(trimmedComment);
+  }
+};
 
   const handleUserProfileClick = () => {
     if (item?.user?.id) {
