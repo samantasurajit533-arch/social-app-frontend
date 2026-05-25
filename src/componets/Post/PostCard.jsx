@@ -11,21 +11,64 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useDispatch, useSelector } from 'react-redux';
 import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post.action';
 
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Box, Avatar, Typography, Card } from '@mui/material'; // Adjust imports based on your structure
+
 const PostCard = ({ item }) => {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // 2. Initialize useNavigate
+  const navigate = useNavigate();
   const [showComments, setShowComments] = useState(false);
   const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
+  
+  // Added a state variable to manage input field safely
+  const [commentInput, setCommentInput] = useState("");
 
   const handleLikePost = () => dispatch(likePostAction(item.id));
   const isLiked = item.liked?.some((user) => user.id === currentUser?.id);
   const handleShowComment = () => setShowComments(!showComments);
+  
   const handleCreateComment = (content) => {
     dispatch(createCommentAction({ postId: item.id, data: { content } }));
   };
 
-  // 3. Handle navigation safely
+  // Asynchronous wrapper to intercept submission and check toxicity
+  const handleCommentSubmit = async () => {
+    const trimmedComment = commentInput.trim();
+    if (!trimmedComment) return;
+
+    // Clear input instantly for a snappy UI feeling
+    setCommentInput("");
+
+    try {
+      const response = await fetch('/check-toxic', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment: trimmedComment }),
+      });
+
+      const data = await response.json();
+
+      if (data.toxic) {
+        alert(data.message); // Replace with your UI snackbar/toast notice
+        setCommentInput(trimmedComment); 
+        return;
+      }
+
+      //
+      handleCreateComment(trimmedComment);
+
+    } catch (error) {
+      console.error("Toxicity check failed:", error);
+  
+      handleCreateComment(trimmedComment);
+    }
+  };
+
   const handleUserProfileClick = () => {
     if (item?.user?.id) {
       navigate(`/profile/${item.user.id}`);
@@ -47,7 +90,6 @@ const PostCard = ({ item }) => {
   };
 
   if (!item) return null;
-
   return (
     <Card sx={{
       borderRadius: '20px',
@@ -217,22 +259,17 @@ const PostCard = ({ item }) => {
           {saved ? <BookmarkIcon sx={{ fontSize: '1.2rem' }} /> : <BookmarkBorderIcon sx={{ fontSize: '1.2rem' }} />}
         </IconButton>
       </Box>
-
-      {/* ── COMMENTS SECTION ── */}
-      {showComments && (
-        <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', mx: 2, pb: 2 }}>
-
-          {/* Comment Input */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
+       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
             <Avatar
               src={currentUser?.profileImage}
               sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
             />
             <input
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && e.target.value.trim() !== "") {
-                  handleCreateComment(e.target.value);
-                  e.target.value = "";
+                if (e.key === "Enter") {
+                  handleCommentSubmit();
                 }
               }}
               placeholder="Write a comment..."
@@ -248,12 +285,45 @@ const PostCard = ({ item }) => {
               }}
             />
           </Box>
-                  {/* Render Existing Comments */}
+          
+         
+      {/* ── COMMENTS SECTION ── */}
+      {showComments && (
+        <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', mx: 2, pb: 2 }}>
+
+          {/* Comment Input */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
+            <Avatar
+              src={currentUser?.profileImage}
+              sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
+            />
+            <input
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleCommentSubmit();
+                }
+              }}
+              placeholder="Write a comment..."
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '20px',
+                padding: '8px 16px',
+                color: 'white',
+                fontSize: '0.85rem',
+                outline: 'none',
+              }}
+            />
+          </Box>
+          
+          {/* Render Existing Comments */}
           {item.comments && item.comments.length > 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '250px', overflowY: 'auto', mt: 1 }}>
               {item.comments.map((comment, index) => (
                 <Box key={comment.id || index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-                  {/* Make comment user clickable too */}
                   <Avatar 
                     onClick={() => comment.user?.id && navigate(`/profile/${comment.user.id}`)}
                     src={comment.user?.profileImage} 

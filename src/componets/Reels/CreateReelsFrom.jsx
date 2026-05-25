@@ -14,7 +14,7 @@ const CreateReelsForm = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const dispatch = useDispatch();
 
-  // ✅ Use api interceptor so JWT is sent automatically
+  // 
   const handleAiGenerate = async () => {
     if (!caption.trim()) {
       alert("Please type a few keywords first (e.g., beach, sunset)!");
@@ -44,7 +44,7 @@ const CreateReelsForm = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // ✅ Check file size (max 50MB)
+    // 
     if (file.size > 50 * 1024 * 1024) {
       alert("Video too large. Maximum size is 50MB.");
       return;
@@ -73,7 +73,7 @@ const CreateReelsForm = () => {
       setVideoUrl("");
       setShowSuccess(false);
     }, 2500);
-  };// Old code — same alert for everything
+  };//
 
 
  
