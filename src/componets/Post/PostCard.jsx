@@ -18,7 +18,7 @@ const PostCard = ({ item }) => {
   const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
   
-  // কমেন্ট বক্সের জন্য ম্যানেজড স্টেট
+
   const [commentInput, setCommentInput] = useState("");
 
   const handleLikePost = () => dispatch(likePostAction(item.id));
