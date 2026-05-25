@@ -11,7 +11,6 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useDispatch, useSelector } from 'react-redux';
 import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post.action';
 
-import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Box, Avatar, Typography, Card } from '@mui/material'; // Adjust imports based on your structure
