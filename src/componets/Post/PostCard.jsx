@@ -1,6 +1,6 @@
 import { Avatar, Card, Typography, Box, IconButton } from '@mui/material';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -18,7 +18,7 @@ const PostCard = ({ item }) => {
   const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
   
-  // Added a state variable to manage input field safely
+  // কমেন্ট বক্সের জন্য ম্যানেজড স্টেট
   const [commentInput, setCommentInput] = useState("");
 
   const handleLikePost = () => dispatch(likePostAction(item.id));
@@ -29,16 +29,19 @@ const PostCard = ({ item }) => {
     dispatch(createCommentAction({ postId: item.id, data: { content } }));
   };
 
-  // Asynchronous wrapper to intercept submission and check toxicity
+
   const handleCommentSubmit = async () => {
     const trimmedComment = commentInput.trim();
     if (!trimmedComment) return;
 
-    // Clear input instantly for a snappy UI feeling
+
     setCommentInput("");
 
     try {
-      const response = await fetch('/check-toxic', {
+  
+      const BACKEND_URL = 'https://social-app-backend-pogv.onrender.com'; 
+      
+      const response = await fetch(`${BACKEND_URL}/api/ai/check-toxic`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,17 +52,17 @@ const PostCard = ({ item }) => {
       const data = await response.json();
 
       if (data.toxic) {
-        alert(data.message); // Replace with your UI snackbar/toast notice
+        alert(data.message); 
         setCommentInput(trimmedComment); 
         return;
       }
 
-      //
+  
       handleCreateComment(trimmedComment);
 
     } catch (error) {
       console.error("Toxicity check failed:", error);
-  
+      
       handleCreateComment(trimmedComment);
     }
   };
@@ -85,6 +88,7 @@ const PostCard = ({ item }) => {
   };
 
   if (!item) return null;
+
   return (
     <Card sx={{
       borderRadius: '20px',
@@ -102,16 +106,14 @@ const PostCard = ({ item }) => {
 
       {/* ── HEADER ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5, pb: 1.5 }}>
-        
-        {/* Wrap Avatar and Name together to make them clickable */}
         <Box 
           onClick={handleUserProfileClick}
           sx={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: 1.5, 
-            cursor: 'pointer', // Show pointer cursor on hover
-            '&:hover .user-name': { color: '#6366f1' } // Subtle color change on hover
+            cursor: 'pointer',
+            '&:hover .user-name': { color: '#6366f1' }
           }}
         >
           <Avatar
@@ -129,13 +131,7 @@ const PostCard = ({ item }) => {
           <Box>
             <Typography 
               className="user-name"
-              sx={{
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                color: 'white',
-                lineHeight: 1.2,
-                transition: 'color 0.2s'
-              }}
+              sx={{ fontWeight: 700, fontSize: '0.95rem', color: 'white', lineHeight: 1.2, transition: 'color 0.2s' }}
             >
               {item.user ? `${item.user.firstName} ${item.user.lastName}` : "User"}
             </Typography>
@@ -144,7 +140,6 @@ const PostCard = ({ item }) => {
             </Typography>
           </Box>
         </Box>
-        
         <IconButton sx={{ color: 'rgba(255,255,255,0.3)', '&:hover': { color: 'white' } }}>
           <MoreVertIcon fontSize="small" />
         </IconButton>
@@ -153,12 +148,7 @@ const PostCard = ({ item }) => {
       {/* ── CAPTION ── */}
       {item.caption && (
         <Box sx={{ px: 2.5, pb: 1.5 }}>
-          <Typography sx={{
-            color: 'rgba(255,255,255,0.75)',
-            fontSize: '0.92rem',
-            lineHeight: 1.6,
-            fontWeight: 400
-          }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.92rem', lineHeight: 1.6, fontWeight: 400 }}>
             {item.caption}
           </Typography>
         </Box>
@@ -167,11 +157,7 @@ const PostCard = ({ item }) => {
       {/* ── MEDIA ── */}
       {item.image && (
         <Box sx={{ px: 2, pb: 1 }}>
-          <Box sx={{
-            borderRadius: '14px',
-            overflow: 'hidden',
-            bgcolor: 'rgba(0,0,0,0.3)',
-          }}>
+          <Box sx={{ borderRadius: '14px', overflow: 'hidden', bgcolor: 'rgba(0,0,0,0.3)' }}>
             {isVideo(item.image) ? (
               <video
                 controls muted loop playsInline
@@ -190,24 +176,11 @@ const PostCard = ({ item }) => {
       )}
 
       {/* ── ACTIONS ── */}
-      <Box sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        px: 2, py: 1
-      }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-
           {/* Like */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              onClick={handleLikePost}
-              sx={{
-                color: isLiked ? '#ef4444' : 'rgba(255,255,255,0.4)',
-                '&:hover': { color: '#ef4444', bgcolor: 'rgba(239,68,68,0.08)' },
-                transition: '0.2s'
-              }}
-            >
+            <IconButton onClick={handleLikePost} sx={{ color: isLiked ? '#ef4444' : 'rgba(255,255,255,0.4)' }}>
               {isLiked ? <FavoriteIcon sx={{ fontSize: '1.3rem' }} /> : <FavoriteBorderIcon sx={{ fontSize: '1.3rem' }} />}
             </IconButton>
             <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
@@ -215,16 +188,9 @@ const PostCard = ({ item }) => {
             </Typography>
           </Box>
 
-          {/* Comment */}
+          {/* Comment Toggle */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton
-              onClick={handleShowComment}
-              sx={{
-                color: showComments ? '#6366f1' : 'rgba(255,255,255,0.4)',
-                '&:hover': { color: '#6366f1', bgcolor: 'rgba(99,102,241,0.08)' },
-                transition: '0.2s'
-              }}
-            >
+            <IconButton onClick={handleShowComment} sx={{ color: showComments ? '#6366f1' : 'rgba(255,255,255,0.4)' }}>
               <ChatBubbleOutlineIcon sx={{ fontSize: '1.2rem' }} />
             </IconButton>
             <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
@@ -233,65 +199,23 @@ const PostCard = ({ item }) => {
           </Box>
 
           {/* Share */}
-          <IconButton sx={{
-            color: 'rgba(255,255,255,0.4)',
-            '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.05)' },
-            transition: '0.2s'
-          }}>
+          <IconButton sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: 'white' } }}>
             <ShareIcon sx={{ fontSize: '1.2rem' }} />
           </IconButton>
         </Box>
 
         {/* Bookmark */}
-        <IconButton
-          onClick={() => setSaved(!saved)}
-          sx={{
-            color: saved ? '#6366f1' : 'rgba(255,255,255,0.4)',
-            '&:hover': { color: '#6366f1', bgcolor: 'rgba(99,102,241,0.08)' },
-            transition: '0.2s'
-          }}
-        >
+        <IconButton onClick={() => setSaved(!saved)} sx={{ color: saved ? '#6366f1' : 'rgba(255,255,255,0.4)' }}>
           {saved ? <BookmarkIcon sx={{ fontSize: '1.2rem' }} /> : <BookmarkBorderIcon sx={{ fontSize: '1.2rem' }} />}
         </IconButton>
       </Box>
-       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
-            <Avatar
-              src={currentUser?.profileImage}
-              sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
-            />
-            <input
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCommentSubmit();
-                }
-              }}
-              placeholder="Write a comment..."
-              style={{
-                flex: 1,
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '20px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '0.85rem',
-                outline: 'none',
-              }}
-            />
-          </Box>
-          
-         
       {/* ── COMMENTS SECTION ── */}
       {showComments && (
         <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', mx: 2, pb: 2 }}>
-
-          {/* Comment Input */}
+          
+          {/* Comment Input Box */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
-            <Avatar
-              src={currentUser?.profileImage}
-              sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
-            />
+            <Avatar src={currentUser?.profileImage} sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }} />
             <input
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
@@ -313,7 +237,7 @@ const PostCard = ({ item }) => {
               }}
             />
           </Box>
-          
+
           {/* Render Existing Comments */}
           {item.comments && item.comments.length > 0 && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '250px', overflowY: 'auto', mt: 1 }}>
