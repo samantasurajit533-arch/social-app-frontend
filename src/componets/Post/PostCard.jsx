@@ -1,6 +1,5 @@
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Avatar, Card, Typography, Box, IconButton } from '@mui/material';
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -9,7 +8,12 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import BookmarkBorderIcon from '@mui/icons-material/BookmarkBorder';
 import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post.action';
+import { api } from '../../componets/config/api'; // ✅ fixed backend url
+import { MoodContext } from '../../pages/HomePage/HomePage';
+
+let viewHistory = {};
 
 const PostCard = ({ item }) => {
   const dispatch = useDispatch();
@@ -17,72 +21,103 @@ const PostCard = ({ item }) => {
   const [showComments, setShowComments] = useState(false);
   const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
-  
-
   const [commentInput, setCommentInput] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false); // ✅ added
+
+  const { refreshMoodStatus, sendBehaviorData } = useContext(MoodContext) || {
+    refreshMoodStatus: () => {},
+    sendBehaviorData: () => {}
+  };
+
+  const cardRef = useRef(null);
+  const timerRef = useRef(null);
 
   const handleLikePost = () => dispatch(likePostAction(item.id));
   const isLiked = item.liked?.some((user) => user.id === currentUser?.id);
   const handleShowComment = () => setShowComments(!showComments);
-  
+
   const handleCreateComment = (content) => {
     dispatch(createCommentAction({ postId: item.id, data: { content } }));
   };
 
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          timerRef.current = setTimeout(() => {
+            const currentCategory = item.category || "general";
+            viewHistory[currentCategory] = (viewHistory[currentCategory] || 0) + 1;
+            const totalViewsInClass = viewHistory[currentCategory];
+            if (totalViewsInClass >= 1) {
+              const reportString = `${currentCategory}: focused deeply for 45 seconds`;
+              if (sendBehaviorData) {
+                sendBehaviorData("", reportString);
+              }
+              viewHistory = {};
+            }
+          }, 35000);
+        } else {
+          if (timerRef.current) {
+            clearTimeout(timerRef.current);
+          }
+        }
+      });
+    }, { threshold: 0.75 });
 
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [item, sendBehaviorData]);
+
+  // ✅ Fixed: using api interceptor + toxic check
   const handleCommentSubmit = async () => {
     const trimmedComment = commentInput.trim();
-    if (!trimmedComment) return;
+    if (!trimmedComment || commentLoading) return;
 
-
+    setCommentLoading(true);
     setCommentInput("");
 
     try {
-  
-      const BACKEND_URL = 'https://social-app-backend-pogv.onrender.com'; 
-      
-      const response = await fetch(`${BACKEND_URL}/api/ai/check-toxic`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ comment: trimmedComment }),
+      const response = await api.post('/api/ai/check-toxic', {
+        comment: trimmedComment
       });
 
-      const data = await response.json();
-
-      if (data.toxic) {
-        alert(data.message); 
-        setCommentInput(trimmedComment); 
+      if (response.data.toxic) {
+        alert("⚠️ " + response.data.message);
+        setCommentInput(trimmedComment); // restore input
+        setCommentLoading(false);
         return;
       }
 
-  
       handleCreateComment(trimmedComment);
-       fetch(`${BACKEND_URL}/api/ai/mood/analyze`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        userId: currentUser.id,
-        recentComments: trimmedComment,
-        scrolledCategories: "general:10s" 
-      }),
-    }).catch(err => console.error("Silent mood tracking failed", err));
 
-  } catch (error) {
-    console.error("Process failed:", error);
-    handleCreateComment(trimmedComment);
-  }
-};
+      // background mood analysis
+      try {
+        const moodResponse = await api.post('/api/ai/mood/analyze', {
+          userId: currentUser.id,
+          recentComments: trimmedComment,
+          scrolledCategories: `${item.category || "general"}: interacted`
+        });
+        if (moodResponse.data.success && refreshMoodStatus) {
+          refreshMoodStatus();
+        }
+      } catch (moodError) {
+        // silent fail for mood
+      }
 
-  const handleUserProfileClick = () => {
-    if (item?.user?.id) {
-      navigate(`/profile/${item.user.id}`);
+    } catch (error) {
+      console.error("Process failed:", error);
+      handleCreateComment(trimmedComment);
+    } finally {
+      setCommentLoading(false);
     }
   };
 
+  const handleUserProfileClick = () => {
+    if (item?.user?.id) navigate(`/profile/${item.user.id}`);
+  };
+
   const getSecureUrl = (url) => url?.replace("http://", "https://");
-  const isVideo = (url) => url?.includes("/video/") || url?.match(/\.(mp4|mov|avi|wmv|webm)\$/) !== null;
+  const isVideo = (url) => url?.includes("/video/") || url?.match(/\.(mp4|mov|avi|wmv|webm)$/) !== null;
 
   const formatTime = (dateStr) => {
     if (!dateStr) return "";
@@ -98,7 +133,7 @@ const PostCard = ({ item }) => {
   if (!item) return null;
 
   return (
-    <Card sx={{
+    <Card ref={cardRef} sx={{
       borderRadius: '20px',
       background: '#0f1724',
       border: '1px solid rgba(255,255,255,0.06)',
@@ -114,13 +149,10 @@ const PostCard = ({ item }) => {
 
       {/* ── HEADER ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, pt: 2.5, pb: 1.5 }}>
-        <Box 
+        <Box
           onClick={handleUserProfileClick}
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1.5, 
-            cursor: 'pointer',
+          sx={{
+            display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer',
             '&:hover .user-name': { color: '#6366f1' }
           }}
         >
@@ -137,7 +169,7 @@ const PostCard = ({ item }) => {
             {!item.user?.profileImage && item.user?.firstName?.[0]}
           </Avatar>
           <Box>
-            <Typography 
+            <Typography
               className="user-name"
               sx={{ fontWeight: 700, fontSize: '0.95rem', color: 'white', lineHeight: 1.2, transition: 'color 0.2s' }}
             >
@@ -186,9 +218,13 @@ const PostCard = ({ item }) => {
       {/* ── ACTIONS ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+
           {/* Like */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton onClick={handleLikePost} sx={{ color: isLiked ? '#ef4444' : 'rgba(255,255,255,0.4)' }}>
+            <IconButton
+              onClick={handleLikePost}
+              sx={{ color: isLiked ? '#ef4444' : 'rgba(255,255,255,0.4)' }}
+            >
               {isLiked ? <FavoriteIcon sx={{ fontSize: '1.3rem' }} /> : <FavoriteBorderIcon sx={{ fontSize: '1.3rem' }} />}
             </IconButton>
             <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
@@ -196,9 +232,12 @@ const PostCard = ({ item }) => {
             </Typography>
           </Box>
 
-          {/* Comment Toggle */}
+          {/* Comment */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton onClick={handleShowComment} sx={{ color: showComments ? '#6366f1' : 'rgba(255,255,255,0.4)' }}>
+            <IconButton
+              onClick={handleShowComment}
+              sx={{ color: showComments ? '#6366f1' : 'rgba(255,255,255,0.4)' }}
+            >
               <ChatBubbleOutlineIcon sx={{ fontSize: '1.2rem' }} />
             </IconButton>
             <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', ml: -0.5 }}>
@@ -207,61 +246,71 @@ const PostCard = ({ item }) => {
           </Box>
 
           {/* Share */}
-          <IconButton sx={{ color: 'rgba(255,255,255,0.4)', '&:hover': { color: 'white' } }}>
+          <IconButton sx={{ color: 'rgba(255,255,255,0.4)' }}>
             <ShareIcon sx={{ fontSize: '1.2rem' }} />
           </IconButton>
         </Box>
 
         {/* Bookmark */}
-        <IconButton onClick={() => setSaved(!saved)} sx={{ color: saved ? '#6366f1' : 'rgba(255,255,255,0.4)' }}>
+        <IconButton
+          onClick={() => setSaved(!saved)}
+          sx={{ color: saved ? '#6366f1' : 'rgba(255,255,255,0.4)' }}
+        >
           {saved ? <BookmarkIcon sx={{ fontSize: '1.2rem' }} /> : <BookmarkBorderIcon sx={{ fontSize: '1.2rem' }} />}
         </IconButton>
       </Box>
+
       {/* ── COMMENTS SECTION ── */}
       {showComments && (
         <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.05)', mx: 2, pb: 2 }}>
-          
+
           {/* Comment Input Box */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pt: 2, pb: 1.5 }}>
-            <Avatar src={currentUser?.profileImage} sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }} />
+            <Avatar
+              src={currentUser?.profileImage}
+              sx={{ width: 32, height: 32, border: '1px solid rgba(99,102,241,0.5)' }}
+            />
             <input
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleCommentSubmit();
-                }
+                if (e.key === "Enter") handleCommentSubmit();
               }}
-              placeholder="Write a comment..."
+              disabled={commentLoading}
+              placeholder={commentLoading ? "🔍 Checking..." : "Write a comment..."}
               style={{
                 flex: 1,
                 backgroundColor: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                border: `1px solid ${commentLoading ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)'}`,
                 borderRadius: '20px',
                 padding: '8px 16px',
                 color: 'white',
                 fontSize: '0.85rem',
                 outline: 'none',
+                fontFamily: 'inherit',
+                opacity: commentLoading ? 0.7 : 1,
+                transition: 'all 0.2s'
               }}
             />
           </Box>
 
           {/* Render Existing Comments */}
           {item.comments && item.comments.length > 0 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '250px', overflowY: 'auto', mt: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '250px', overflowY: 'auto', mt: 1 }}
+              className="no-scrollbar">
               {item.comments.map((comment, index) => (
                 <Box key={comment.id || index} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-                  <Avatar 
+                  <Avatar
                     onClick={() => comment.user?.id && navigate(`/profile/${comment.user.id}`)}
-                    src={comment.user?.profileImage} 
+                    src={comment.user?.profileImage}
                     sx={{ width: 28, height: 28, fontSize: '0.75rem', cursor: 'pointer' }}
                   >
-                    {!comment.user?.profileImage && comment.user?.firstName?.[0]}
+                    {!comment.user?.profileImage && comment.user?.firstName?.charAt(0)}
                   </Avatar>
                   <Box sx={{ backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '12px', p: 1, flex: 1 }}>
                     <Typography
                       onClick={() => comment.user?.id && navigate(`/profile/${comment.user.id}`)}
-                      sx={{ color: 'white', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                      sx={{ color: '#818cf8', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
                     >
                       {comment.user ? `${comment.user.firstName} ${comment.user.lastName}` : "User"}
                     </Typography>
@@ -275,7 +324,8 @@ const PostCard = ({ item }) => {
           )}
         </Box>
       )}
-    </Card>
+
+    </Card> // ✅ Card properly closed here
   );
 };
 

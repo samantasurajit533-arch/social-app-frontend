@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Card, IconButton, Avatar, Box, Typography } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'; // Unique icon
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useDispatch, useSelector } from 'react-redux';
 
 // Components
@@ -12,13 +12,21 @@ import CreatePostModel1 from '../CreatePostModel/CreatePostModel1';
 
 // Actions
 import { getAllPostAction, getAllStoriesAction } from '../../pages/Redux/Post/post.action';
+import { MoodContext } from '../../pages/HomePage/HomePage'; 
 
 const MiddlePart = () => {
   const dispatch = useDispatch();
+
   const { posts = [], stories = [] } = useSelector(store => store.post || {});
   const { user } = useSelector(store => store.auth || {});
 
   const [openCreatePostModal, setOpenCreatePostModal] = useState(false);
+  
+  
+  const [displayedPosts, setDisplayedPosts] = useState([]);
+
+  
+  const { blockFilters } = useContext(MoodContext) || { blockFilters: [] };
 
   const handleCloseCreatePostModal = () => setOpenCreatePostModal(false);
   const handleOpenCreatePostModal = () => setOpenCreatePostModal(true);
@@ -27,6 +35,21 @@ const MiddlePart = () => {
     dispatch(getAllPostAction());
     dispatch(getAllStoriesAction());
   }, []);
+
+  useEffect(() => {
+    if (posts && posts.length > 0) {
+      if (blockFilters && blockFilters.length > 0) {
+        
+        const secureFeed = posts.filter(post => !blockFilters.includes(post.category));
+        setDisplayedPosts(secureFeed);
+      } else {
+  
+        setDisplayedPosts(posts);
+      }
+    } else {
+      setDisplayedPosts([]);
+    }
+  }, [blockFilters, posts]);
 
   return (
     <Box sx={{ width: '100%', py: 2 }}>
@@ -108,10 +131,10 @@ const MiddlePart = () => {
         </div>
       </Card>
 
-      {/* 3. The Feed: Asymmetric Spacing */}
+      
       <div className='mt-8 space-y-8 pb-20'>
-        {posts?.length > 0 ? (
-          posts.map((item, index) => (
+        {displayedPosts?.length > 0 ? (
+          displayedPosts.map((item, index) => (
             <PostCard key={item.id || `post-${index}`} item={item} />
           ))
         ) : (
