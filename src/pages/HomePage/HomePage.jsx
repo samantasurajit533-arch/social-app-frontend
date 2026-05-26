@@ -20,7 +20,7 @@ import HomeRight from '../../componets/HomeRight/HomeRight';
 import Message from '../Message/Message';
 
 
- const MoodContext = createContext();
+   export const MoodContext = createContext();
 
 const HomePage = () => {
   const location = useLocation();
