@@ -10,8 +10,8 @@ import BookmarkIcon from '@mui/icons-material/Bookmark';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createCommentAction, likePostAction } from '../../pages/Redux/Post/post.action';
-import { api } from '../../componets/config/api'; // ✅ fixed backend url
-import { MoodContext } from '../../pages/HomePage/HomePage';
+import { MoodContext } from '../../pages/HomePage/HomePage'; 
+import { api } from '../../componets/config/api';
 
 let viewHistory = {};
 
@@ -22,7 +22,7 @@ const PostCard = ({ item }) => {
   const [saved, setSaved] = useState(false);
   const { user: currentUser } = useSelector((store) => store.auth);
   const [commentInput, setCommentInput] = useState("");
-  const [commentLoading, setCommentLoading] = useState(false); // ✅ added
+  const [commentLoading, setCommentLoading] = useState(false);
 
   const { refreshMoodStatus, sendBehaviorData } = useContext(MoodContext) || {
     refreshMoodStatus: () => {},
@@ -68,7 +68,7 @@ const PostCard = ({ item }) => {
     return () => observer.disconnect();
   }, [item, sendBehaviorData]);
 
-  // ✅ Fixed: using api interceptor + toxic check
+  // 
   const handleCommentSubmit = async () => {
     const trimmedComment = commentInput.trim();
     if (!trimmedComment || commentLoading) return;
@@ -325,7 +325,7 @@ const PostCard = ({ item }) => {
         </Box>
       )}
 
-    </Card> // ✅ Card properly closed here
+    </Card> 
   );
 };
 
