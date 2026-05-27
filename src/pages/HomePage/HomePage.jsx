@@ -90,8 +90,9 @@ const HomePage = () => {
       <Box sx={{ 
         background: currentTheme.bg, 
         minHeight: '100vh', 
+        width: '100vw', // 
         color: 'white', 
-        pb: { xs: 10, md: 0 },
+        pb: { xs: 10, md: 0 }, 
         transition: 'background 0.8s ease-in-out',
         overflowX: 'hidden' 
       }}>
@@ -102,36 +103,45 @@ const HomePage = () => {
             <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: currentTheme.accent, letterSpacing: '0.5px' }}>{currentTheme.text}</Typography>
           </Box>
         )}
-        {/* 🌟*/}
-        <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2, md: 4, lg: 5 }, width: '100%', mx: 0 }}>
+
+        
+        <Grid container sx={{ 
+          px: { xs: 1, sm: 2, md: 4, lg: 5 }, 
+          width: '100%', 
+          mx: 'auto',
+          boxSizing: 'border-box'
+        }}>
           
-          {/*  */}
-          <Grid item xs={0} sm={4} md={3} lg={2.5} sx={{ display: { xs: 'none', sm: 'block' } }}>
+          {/* LEFT NAV: Sidebar */}
+          <Grid item xs={0} md={3} lg={2.5} sx={{ display: { xs: 'none', md: 'block' }, pr: { md: 2, lg: 3 } }}>
             <Box sx={{ 
               position: 'sticky', top: 20, 
-              height: 'calc(100vh - 40px)',
-              borderRadius: 4, overflowY: 'auto', 
+              height: 'calc(100vh - 40px)', 
+              borderRadius: 4, overflow: 'hidden', 
               bgcolor: 'rgba(30, 41, 59, 0.4)', 
               backdropFilter: 'blur(15px)', 
               border: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'rgba(255,255,255,0.06)'}`,
               boxShadow: `0 4px 20px ${currentTheme.glow}`,
               transition: 'all 0.5s ease',
-              p: 1
-            }} className="no-scrollbar">
+              mt: 2
+            }}>
               <Sidebar />
             </Box>
           </Grid>
 
-          {/* MIDDLE CONTENT */}
-          <Grid item xs={12} sm={8} md={isHomePage ? 6 : 9} lg={isHomePage ? 6 : 9.5} sx={{ mt: 0 }}>
+          {}
+          <Grid item xs={12} md={isHomePage ? 6 : 9} lg={isHomePage ? 6 : 9.5} sx={{ mt: 2 }}>
             <Box sx={{ 
               width: '100%', 
+              maxWidth: '100%', 
               minHeight: '100vh', 
               borderRadius: { md: 4 },
               bgcolor: 'rgba(30, 41, 59, 0.15)', 
-              p: { xs: 1.5, md: 3 }, //
+              p: { xs: 1.5, md: 3 },
               border: { md: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'transparent'}` },
-              transition: 'all 0.5s ease'
+              transition: 'all 0.5s ease',
+              boxSizing: 'border-box',
+              overflow: 'hidden' 
             }}>
               <Routes>
                 <Route path="/" element={<MiddlePart />} />
@@ -143,9 +153,9 @@ const HomePage = () => {
             </Box>
           </Grid>
 
-          {/* RIGHT SIDEBAR  */}
+          {/* RIGHT SIDEBAR */}
           {isHomePage && (
-            <Grid item xs={0} md={3} lg={3.5} sx={{ display: { xs: 'none', md: 'none', lg: 'block' } }}>
+            <Grid item xs={0} lg={3.5} sx={{ display: { xs: 'none', lg: 'block' }, pl: 3, mt: 2 }}>
               <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
                 <HomeRight />
               </Box>
