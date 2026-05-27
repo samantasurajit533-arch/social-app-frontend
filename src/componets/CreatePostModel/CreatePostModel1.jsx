@@ -1,4 +1,4 @@
-import { Avatar, Backdrop, Box, Button, CircularProgress, IconButton, Modal, Typography } from '@mui/material';
+import { Avatar, Backdrop, Box, Button, CircularProgress, IconButton, Modal, Typography, Tooltip } from '@mui/material';
 import { useFormik } from 'formik';
 import React, { useState } from 'react';
 import ImageIcon from '@mui/icons-material/Image';
@@ -8,6 +8,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { uploadToCloudniry } from '../../utils/uploadToCloudniry';
 import { useDispatch, useSelector } from 'react-redux';
 import { createPostAction } from '../../pages/Redux/Post/post.action';
+import { api } from '../../componets/config/api';
 
 const style = {
   position: 'absolute',
@@ -29,12 +30,18 @@ const CreatePostModel1 = ({ handleClose, open }) => {
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedVideo, setSelectedVideo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  
   const dispatch = useDispatch();
   const { user } = useSelector(store => store.auth);
 
   const handleSelectImage = async (event) => {
     setIsLoading(true);
     const file = event.target.files[0];
+    if (!file) {
+      setIsLoading(false);
+      return;
+    }
     const imageUrl = await uploadToCloudniry(file, "image");
     setSelectedVideo(""); 
     formik.setFieldValue("video", "");
@@ -46,12 +53,47 @@ const CreatePostModel1 = ({ handleClose, open }) => {
   const handleSelectVideo = async (event) => {
     setIsLoading(true);
     const file = event.target.files[0];
+    if (!file) {
+      setIsLoading(false);
+      return;
+    }
     const videoUrl = await uploadToCloudniry(file, "video");
     setSelectedImage("");
     formik.setFieldValue("image", "");
     setSelectedVideo(videoUrl);
     formik.setFieldValue("video", videoUrl);
     setIsLoading(false);
+  };
+
+  // ── EXACT MATCH AI GENERATION FUNCTION ──
+  const handleAiGenerate = async () => {
+    const currentCaption = formik.values.caption.trim();
+    if (!currentCaption) {
+      alert("Please type a few keywords first (e.g., beach, sunset)!");
+      return;
+    }
+    
+    setAiLoading(true);
+    try {
+      // Changed to exact matching api.get structure with query params
+      const response = await api.get(`/api/ai/generate-caption`, {
+        params: { keywords: currentCaption }
+      });
+
+      if (response.data && response.data.caption) {
+        // Set values smoothly back into formik field state
+        formik.setFieldValue("caption", response.data.caption);
+      } else {
+        alert("AI returned no caption. Try different keywords.");
+      }
+    } catch (error) {
+      console.error("AI Generation failed:", error);
+      const errMsg = error.response?.data?.error || "AI generation failed. Please try again.";
+      alert(errMsg);
+    } // Final safety block handles stopping both indicator bars
+    finally {
+      setAiLoading(false);
+    }
   };
 
   const formik = useFormik({
@@ -84,30 +126,63 @@ const CreatePostModel1 = ({ handleClose, open }) => {
             <IconButton onClick={handleClose} sx={{ color: 'white' }}><CloseIcon /></IconButton>
           </Box>
 
-          <textarea
-            className='no-scrollbar'
-            style={{
-              width: '100%',
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: 'white',
-              fontSize: '1.2rem',
-              resize: 'none',
-              minHeight: '120px'
-            }}
-            placeholder="Share something unique..."
-            name='caption'
-            onChange={formik.handleChange}
-            value={formik.values.caption}
-          />
+          {/* Interactive Workspace with Magic Wand Action Dock */}
+          <Box sx={{ position: 'relative', width: '100%' }}>
+            <textarea
+              className='no-scrollbar'
+              style={{
+                width: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'white',
+                fontSize: '1.2rem',
+                resize: 'none',
+                minHeight: '120px',
+                paddingRight: '50px' 
+              }}
+              placeholder="Share something unique... (Type key terms and click the wand for AI magic!)"
+              name='caption'
+              onChange={formik.handleChange}
+              value={formik.values.caption}
+              disabled={aiLoading}
+            />
+            
+            {/* Embedded AI Magic Button Node */}
+            <Box sx={{ position: 'absolute', bottom: 10, right: 5, zIndex: 10 }}>
+              <Tooltip title="Enhance text with AI" arrow>
+                <IconButton 
+                  onClick={handleAiGenerate}
+                  disabled={aiLoading || isLoading}
+                  sx={{ 
+                    color: '#a855f7', 
+                    bgcolor: 'rgba(168, 85, 247, 0.1)',
+                    '&:hover': { bgcolor: 'rgba(168, 85, 247, 0.2)' },
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                >
+                  {aiLoading ? (
+                    <CircularProgress size={24} sx={{ color: '#a855f7' }} />
+                  ) : (
+                    <AutoAwesomeIcon />
+                  )}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
 
           {/* Media Preview Bento Box */}
           <Box sx={{ position: 'relative' }}>
             {selectedImage && (
               <Box sx={{ mt: 2, position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <img style={{ height: '300px', width: '100%', objectFit: 'cover' }} src={selectedImage} alt="Preview" />
-                <IconButton onClick={() => setSelectedImage("")} sx={{ position: "absolute", top: 10, right: 10, bgcolor: "rgba(0,0,0,0.6)", color: "white" }}>
+                <IconButton 
+                  onClick={() => {
+                    setSelectedImage("");
+                    formik.setFieldValue("image", "");
+                  }} 
+                  sx={{ position: "absolute", top: 10, right: 10, bgcolor: "rgba(0,0,0,0.6)", color: "white" }}
+                >
                   <CloseIcon />
                 </IconButton>
               </Box>
@@ -116,7 +191,13 @@ const CreatePostModel1 = ({ handleClose, open }) => {
             {selectedVideo && (
               <Box sx={{ mt: 2, position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <video style={{ height: '300px', width: '100%', objectFit: 'cover' }} src={selectedVideo} controls />
-                <IconButton onClick={() => setSelectedVideo("")} sx={{ position: "absolute", top: 10, right: 10, bgcolor: "rgba(0,0,0,0.6)", color: "white" }}>
+                <IconButton 
+                  onClick={() => {
+                    setSelectedVideo("");
+                    formik.setFieldValue("video", "");
+                  }} 
+                  sx={{ position: "absolute", top: 10, right: 10, bgcolor: "rgba(0,0,0,0.6)", color: "white" }}
+                >
                   <CloseIcon />
                 </IconButton>
               </Box>
@@ -125,20 +206,20 @@ const CreatePostModel1 = ({ handleClose, open }) => {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4, pt: 2, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
-              <input type='file' accept="image/*" onChange={handleSelectImage} style={{ display: "none" }} id="image-input" />
+              <input type='file' accept="image/*" onChange={handleSelectImage} style={{ display: "none" }} id="image-input" disabled={aiLoading || isLoading} />
               <label htmlFor='image-input'>
-                <IconButton component="span" sx={{ color: '#38bdf8', bgcolor: 'rgba(56, 189, 248, 0.1)' }}><ImageIcon /></IconButton>
+                <IconButton component="span" disabled={aiLoading || isLoading} sx={{ color: '#38bdf8', bgcolor: 'rgba(56, 189, 248, 0.1)' }}><ImageIcon /></IconButton>
               </label>
 
-              <input type='file' accept="video/*" onChange={handleSelectVideo} style={{ display: "none" }} id="video-input" />
+              <input type='file' accept="video/*" onChange={handleSelectVideo} style={{ display: "none" }} id="video-input" disabled={aiLoading || isLoading} />
               <label htmlFor='video-input'>
-                <IconButton component="span" sx={{ color: '#f472b6', bgcolor: 'rgba(244, 114, 182, 0.1)' }}><VideoCallIcon /></IconButton>
+                <IconButton component="span" disabled={aiLoading || isLoading} sx={{ color: '#f472b6', bgcolor: 'rgba(244, 114, 182, 0.1)' }}><VideoCallIcon /></IconButton>
               </label>
             </Box>
 
             <Button 
               type="submit" 
-              disabled={isLoading || (!formik.values.caption && !selectedImage && !selectedVideo)}
+              disabled={isLoading || aiLoading || (!formik.values.caption.trim() && !selectedImage && !selectedVideo)}
               sx={{ 
                 borderRadius: "12px", 
                 px: 4, 

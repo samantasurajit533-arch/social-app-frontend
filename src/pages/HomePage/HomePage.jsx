@@ -2,13 +2,13 @@ import { Grid, Box, IconButton, Avatar, Typography } from '@mui/material';
 import React, { useState, useEffect, createContext } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 
 // Icons
 import HomeIcon from '@mui/icons-material/Home';
 import ExploreIcon from '@mui/icons-material/Explore';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import MessageIcon from '@mui/icons-material/Message';
-import PsychologyIcon from '@mui/icons-material/Psychology';
 
 // Components
 import Sidebar from '../../componets/Sideber/Sidebar';
@@ -19,9 +19,8 @@ import Profile from '../profile/Profile';
 import HomeRight from '../../componets/HomeRight/HomeRight';
 import Message from '../Message/Message';
 
+export const MoodContext = createContext();
 
-   export const MoodContext = createContext();
-//
 const HomePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,9 +28,9 @@ const HomePage = () => {
   const { user } = useSelector(store => store.auth);
 
   const [userMood, setUserMood] = useState("NORMAL"); 
-  const [blockFilters, setBlockFilters] = useState([]); 
+  const [blockFilters, setBlockFilters] = useState([]);
 
-  const BACKEND_URL = 'https://social-app-backend-pogv.onrender.com'; 
+  const BACKEND_URL = 'https://onrender.com'; 
 
   const refreshMoodStatus = async () => {
     if (user?.id) {
@@ -48,8 +47,7 @@ const HomePage = () => {
     }
   };
 
-
-  const sendBehaviorData = async (recentComments = "", scrolledCategories = "") => {
+  const sendBehaviorData = async (recentComments = "", scrolledCategories = "", postImageUrl = "") => {
     if (!user?.id) return;
     try {
       const res = await fetch(`${BACKEND_URL}/api/ai/mood/analyze`, {
@@ -58,12 +56,13 @@ const HomePage = () => {
         body: JSON.stringify({ 
           userId: user.id,
           recentComments: recentComments,
-          scrolledCategories: scrolledCategories 
+          scrolledCategories: scrolledCategories,
+          postImageUrl: postImageUrl
         }),
       });
       const moodData = await res.json();
       if (moodData.success) {
-        refreshMoodStatus();
+        refreshMoodStatus(); 
       }
     } catch (e) {
       console.error("Behavior tracking fail:", e);
@@ -76,41 +75,11 @@ const HomePage = () => {
 
   const getMoodStyles = () => {
     switch (userMood) {
-      case "HAPPY":
-        return {
-          bg: 'radial-gradient(circle at top right, #241d08 0%, #07090d 100%)',
-          glow: 'rgba(234, 179, 8, 0.15)', 
-          accent: '#eab308',
-          text: '✨ Mood Shield: Vibrant Happy Vibe On!'
-        };
-      case "LOVING":
-        return {
-          bg: 'radial-gradient(circle at top right, #240c17 0%, #07090d 100%)', 
-          glow: 'rgba(236, 72, 153, 0.15)', 
-          accent: '#ec4899',
-          text: '💖 Mood Shield: Warm & Loving Mode Active'
-        };
-      case "SAD":
-        return {
-          bg: 'radial-gradient(circle at top right, #0b132b 0%, #07090d 100%)', 
-          glow: 'rgba(56, 189, 248, 0.15)', 
-          accent: '#38bdf8',
-          text: '🌸 Mood Shield: Safe & Comfort Mode'
-        };
-      case "ANGRY":
-        return {
-          bg: 'radial-gradient(circle at top right, #1a0f1a 0%, #07090d 100%)',
-          glow: 'rgba(168, 85, 247, 0.15)', 
-          accent: '#a855f7',
-          text: '🧘 Mood Shield: Serene Zen Mode'
-        };
-      default:
-        return {
-          bg: '#07090d', 
-          glow: 'rgba(99, 102, 241, 0.1)', 
-          accent: '#6366f1',
-          text: null
-        };
+      case "HAPPY": return { bg: 'radial-gradient(circle at top right, #241d08 0%, #07090d 100%)', glow: 'rgba(234, 179, 8, 0.15)', accent: '#eab308', text: '✨ Mood Shield: Vibrant Happy Vibe On!' };
+      case "LOVING": return { bg: 'radial-gradient(circle at top right, #240c17 0%, #07090d 100%)', glow: 'rgba(236, 72, 153, 0.15)', accent: '#ec4899', text: '💖 Mood Shield: Warm & Loving Mode Active' };
+      case "SAD": return { bg: 'radial-gradient(circle at top right, #0b132b 0%, #07090d 100%)', glow: 'rgba(56, 189, 248, 0.15)', accent: '#38bdf8', text: '🌸 Mood Shield: Safe & Comfort Mode' };
+      case "ANGRY": return { bg: 'radial-gradient(circle at top right, #1a0f1a 0%, #07090d 100%)', glow: 'rgba(168, 85, 247, 0.15)', accent: '#a855f7', text: '🧘 Mood Shield: Serene Zen Mode' };
+      default: return { bg: '#07090d', glow: 'rgba(99, 102, 241, 0.1)', accent: '#6366f1', text: null };
     }
   };
 
@@ -122,46 +91,45 @@ const HomePage = () => {
         background: currentTheme.bg, 
         minHeight: '100vh', 
         color: 'white', 
-        pb: { xs: 8, md: 0 },
-        transition: 'background 0.8s ease-in-out' 
+        pb: { xs: 10, md: 0 },
+        transition: 'background 0.8s ease-in-out',
+        overflowX: 'hidden' 
       }}>
         
         {isHomePage && currentTheme.text && (
-          <Box sx={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-            bgcolor: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(5px)',
-            py: 1, borderBottom: `1px solid ${currentTheme.glow}`,
-            boxShadow: `0 4px 30px ${currentTheme.glow}`
-          }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, bgcolor: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(5px)', py: 1, borderBottom: `1px solid ${currentTheme.glow}`, boxShadow: `0 4px 30px ${currentTheme.glow}` }}>
             <PsychologyIcon sx={{ color: currentTheme.accent, fontSize: '1.2rem' }} />
-            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: currentTheme.accent, letterSpacing: '0.5px' }}>
-              {currentTheme.text}
-            </Typography>
+            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: currentTheme.accent, letterSpacing: '0.5px' }}>{currentTheme.text}</Typography>
           </Box>
         )}
-
-        <Grid container sx={{ px: { lg: 5 } }}>
+        {/* 🌟*/}
+        <Grid container spacing={3} sx={{ px: { xs: 1, sm: 2, md: 4, lg: 5 }, width: '100%', mx: 0 }}>
           
-          {/* LEFT NAV: Sidebar */}
-          <Grid item md={3} lg={2.5} sx={{ display: { xs: 'none', md: 'block' } }}>
+          {/*  */}
+          <Grid item xs={0} sm={4} md={3} lg={2.5} sx={{ display: { xs: 'none', sm: 'block' } }}>
             <Box sx={{ 
-              position: 'sticky', top: 20, height: 'calc(100vh - 40px)', mt: 2,
-              borderRadius: 4, overflow: 'hidden', 
+              position: 'sticky', top: 20, 
+              height: 'calc(100vh - 40px)',
+              borderRadius: 4, overflowY: 'auto', 
               bgcolor: 'rgba(30, 41, 59, 0.4)', 
               backdropFilter: 'blur(15px)', 
               border: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'rgba(255,255,255,0.06)'}`,
               boxShadow: `0 4px 20px ${currentTheme.glow}`,
-              transition: 'all 0.5s ease'
-            }}>
+              transition: 'all 0.5s ease',
+              p: 1
+            }} className="no-scrollbar">
               <Sidebar />
             </Box>
           </Grid>
 
           {/* MIDDLE CONTENT */}
-          <Grid item xs={12} md={9} lg={isHomePage ? 6 : 9.5} sx={{ px: { xs: 0, md: 3 }, mt: 2 }}>
+          <Grid item xs={12} sm={8} md={isHomePage ? 6 : 9} lg={isHomePage ? 6 : 9.5} sx={{ mt: 0 }}>
             <Box sx={{ 
-              width: 'full', minHeight: '100vh', borderRadius: { md: 4 },
-              bgcolor: 'rgba(30, 41, 59, 0.15)', p: { xs: 1, md: 2 },
+              width: '100%', 
+              minHeight: '100vh', 
+              borderRadius: { md: 4 },
+              bgcolor: 'rgba(30, 41, 59, 0.15)', 
+              p: { xs: 1.5, md: 3 }, //
               border: { md: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'transparent'}` },
               transition: 'all 0.5s ease'
             }}>
@@ -175,10 +143,10 @@ const HomePage = () => {
             </Box>
           </Grid>
 
-          {/* RIGHT SIDEBAR */}
+          {/* RIGHT SIDEBAR  */}
           {isHomePage && (
-            <Grid item lg={3.5} sx={{ display: { xs: 'none', lg: 'block' } }}>
-              <Box sx={{ position: 'sticky', top: 20, mt: 2, borderRadius: 4 }}>
+            <Grid item xs={0} md={3} lg={3.5} sx={{ display: { xs: 'none', md: 'none', lg: 'block' } }}>
+              <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
                 <HomeRight />
               </Box>
             </Grid>
@@ -215,13 +183,7 @@ const HomePage = () => {
           </IconButton>
 
           <IconButton onClick={() => navigate(`/profile/${user?.id}`)}>
-            <Avatar 
-              src={user?.profileImage} 
-              sx={{ 
-                width: 32, height: 32, 
-                border: location.pathname.includes("/profile") ? `2px solid ${currentTheme.accent}` : 'none' 
-              }} 
-            />
+            <Avatar src={user?.profileImage} sx={{ width: 32, height: 32, border: location.pathname.includes("/profile") ? `2px solid ${currentTheme.accent}` : 'none' }} />
           </IconButton>
         </Box>
       </Box>
