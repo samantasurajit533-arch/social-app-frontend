@@ -30,7 +30,7 @@ const HomePage = () => {
   const [userMood, setUserMood] = useState("NORMAL"); 
   const [blockFilters, setBlockFilters] = useState([]);
 
-  const BACKEND_URL = 'https://onrender.com'; 
+  const BACKEND_URL = 'https://social-app-backend-pogv.onrender.com'; 
 
   const refreshMoodStatus = async () => {
     if (user?.id) {
