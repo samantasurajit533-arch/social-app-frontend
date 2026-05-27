@@ -15,7 +15,7 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: { xs: '90%', sm: 550 },
-  background: 'rgba(15, 23, 42, 0.9)', // Deep Midnight Glass
+  background: 'rgba(15, 23, 42, 0.9)', 
   backdropFilter: 'blur(20px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
   boxShadow: '0 24px 50px rgba(0, 0, 0, 0.5)',
