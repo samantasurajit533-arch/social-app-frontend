@@ -132,15 +132,15 @@ const Sidebar = () => {
       </Box>
     </Box>
   );
-
+// Sidebar.jsx ফাইলের একদম নিচের রিটার্ন (return) স্টেটমেন্টের অংশটুকু পরিবর্তন করে এটি দিন:
   return (
     <>
-      {/* DESKTOP SIDEBAR */}
+      {/* 🌟 ডেস্কটপ সাইডবার কন্টেইনার (কোনো ফিক্সড পিক্সেল ছাড়া ১০০% রেসপন্সিভ) */}
       <Box sx={{ 
         display: { xs: 'none', md: 'flex' }, 
         flexDirection: 'column', 
-        height: '100%', // 🌟 ফিক্সড: ফ্লেক্সিবল গ্রিড হাইট ট্র্যাকিং চালু করা হয়েছে
-        width: '100%', // 🌟 ফিক্সড: ফিক্সড 260px রিমুভ করে গ্রিড বাউন্ডারি মেনে চলার অনুমতি দেওয়া হয়েছে
+        height: '100%', 
+        width: '100%', // গ্রিডের ভেতরের স্পেসিং মেনে চলবে
         bgcolor: 'transparent'
       }}>
         {SidebarContent}
@@ -230,5 +230,6 @@ const Sidebar = () => {
     </>
   )
 }
+
 
 export default Sidebar;

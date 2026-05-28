@@ -30,7 +30,7 @@ const HomePage = () => {
   const [userMood, setUserMood] = useState("NORMAL"); 
   const [blockFilters, setBlockFilters] = useState([]);
 
-  const BACKEND_URL = 'https://social-app-backend-pogv.onrender.com'; 
+  const BACKEND_URL = '"https://social-app-backend-pogv.onrender.com'; 
 
   const refreshMoodStatus = async () => {
     if (user?.id) {
@@ -94,8 +94,7 @@ const HomePage = () => {
         color: 'white', 
         pb: { xs: 10, md: 0 }, 
         transition: 'background 0.8s ease-in-out',
-        overflowX: 'hidden',
-        boxSizing: 'border-box'
+        overflowX: 'hidden'
       }}>
         
         {isHomePage && currentTheme.text && (
@@ -105,46 +104,46 @@ const HomePage = () => {
           </Box>
         )}
 
-        {/* 🌟 গ্রিড কন্টেইনারে মেইন ফিক্স: justifyContent="center" এবং মার্জিন অটো করা হয়েছে যাতে ওয়েবসাইট মাঝখানে থাকে */}
+        {/* 🌟 গ্রিড এবং জাস্টিফাই এলাইনমেন্ট ফিক্স */}
         <Grid 
           container 
-          spacing={3} 
-          justifyContent="center" 
           sx={{ 
             width: '100%', 
-            maxWidth: '1440px', // ডেস্কটপে ম্যাক্স সাইজ লক করা হলো
-            mx: 'auto', // 🌟 পুরো ওয়েবসাইটকে স্ক্রিনের মাঝখানে নিয়ে আসবে, বামে চাপবে না
-            px: { xs: 1, sm: 3, md: 4, lg: 6 }, // 🌟 বাম দিকে বড় সেফটি গ্যাপ তৈরি করা হলো
+            maxWidth: '1250px', // স্ক্রিন বড় হলেও লেআউট ভেঙে ছড়াবে না
+            mx: 'auto', 
+            px: { xs: 1, sm: 2, md: 4 }, 
             boxSizing: 'border-box',
-            mt: 1
+            mt: 2
           }}
         >
           
-          {/* LEFT NAV: Sidebar (এর গ্রিড সাইজ বাড়ানো হয়েছে যাতে স্পেস পায়) */}
+          {/* LEFT NAV: Sidebar (🌟 গ্রিড কলাম উইথ রিয়েল-টাইম ফিক্স) */}
           <Grid item xs={0} md={3.5} lg={3} sx={{ display: { xs: 'none', md: 'block' } }}>
             <Box sx={{ 
-              position: 'sticky', top: 20, 
-              height: 'calc(100vh - 40px)', 
-              borderRadius: 4, overflow: 'hidden', 
-              bgcolor: 'rgba(30, 41, 59, 0.4)', 
+              position: 'sticky', 
+              top: 24, 
+              height: 'calc(100vh - 48px)', 
+              borderRadius: 4, 
+              overflow: 'hidden', 
+              bgcolor: 'rgba(30, 41, 59, 0.3)', 
               backdropFilter: 'blur(15px)', 
               border: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'rgba(255,255,255,0.06)'}`,
               boxShadow: `0 4px 20px ${currentTheme.glow}`,
               transition: 'all 0.5s ease',
-              boxSizing: 'border-box'
+              mr: 2 // 🌟 ডানপাশে স্পেস বাড়ানো হলো যাতে মিডল পার্টের ওপর না যায়
             }}>
               <Sidebar />
             </Box>
           </Grid>
 
-          {/* MIDDLE CONTENT */}
+          {/* MIDDLE CONTENT: 🌟 সাইডবারের সাথে যেন ওভারল্যাপ না হয় তাই ব্রেকপয়েন্ট নিখুঁত করা হয়েছে */}
           <Grid item xs={12} md={isHomePage ? 5.5 : 8.5} lg={isHomePage ? 5.5 : 9}>
             <Box sx={{ 
               width: '100%', 
               minHeight: '100vh', 
               borderRadius: { md: 4 },
               bgcolor: 'rgba(30, 41, 59, 0.15)', 
-              p: { xs: 1.5, md: 3 },
+              p: { xs: 1, md: 2 },
               border: { md: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'transparent'}` },
               transition: 'all 0.5s ease',
               boxSizing: 'border-box'
@@ -161,7 +160,7 @@ const HomePage = () => {
 
           {/* RIGHT SIDEBAR */}
           {isHomePage && (
-            <Grid item xs={0} md={3} lg={3.5} sx={{ display: { xs: 'none', md: 'none', lg: 'block' } }}>
+            <Grid item xs={0} lg={3.5} sx={{ display: { xs: 'none', lg: 'block' }, pl: 2 }}>
               <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
                 <HomeRight />
               </Box>
