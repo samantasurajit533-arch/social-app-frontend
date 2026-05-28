@@ -105,20 +105,21 @@ const HomePage = () => {
           </Box>
         )}
 
-        {/* 🌟 জাস্টিফাই এলাইনমেন্ট ফিক্স: পুরো অ্যাপকে স্ক্রিনের একদম মাঝখানে নিয়ে আসবে */}
+        {/* 🌟 গ্রিড কন্টেইনার এবং এলাইনমেন্ট ফিক্স */}
         <Grid 
           container 
+          spacing={2}
           sx={{ 
             width: '100%', 
-            maxWidth: '1300px', 
+            maxWidth: '1200px', 
             mx: 'auto', 
-            px: { xs: 1, sm: 2, md: 4 }, 
+            px: { xs: 1, sm: 2, md: 3 }, 
             boxSizing: 'border-box',
-            mt: 2
+            mt: 1
           }}
         >
           
-          {/* LEFT NAV: Sidebar (🌟 গ্রিড কলাম ও প্যাডিং টিউনিং) */}
+          {/* LEFT NAV: Sidebar (🌟 রেসপন্সিভ গ্রিড কলাম লক করা হলো) */}
           <Grid item xs={0} md={3.5} lg={3} sx={{ display: { xs: 'none', md: 'block' } }}>
             <Box sx={{ 
               position: 'sticky', 
@@ -131,14 +132,15 @@ const HomePage = () => {
               border: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'rgba(255,255,255,0.06)'}`,
               boxShadow: `0 4px 20px ${currentTheme.glow}`,
               transition: 'all 0.5s ease',
-              mr: 2.5 // মাঝখানের ফিড থেকে দূরত্ব বজায় রাখার জন্য মার্জিন রাইট
+              p: 0.5,
+              boxSizing: 'border-box'
             }}>
               <Sidebar />
             </Box>
           </Grid>
 
-          {/* MIDDLE CONTENT: 🌟 সাইডবারের সাথে সমান্তরালভাবে একই রো-তে পাশাপাশি রেন্ডার হবে */}
-          <Grid item xs={12} md={isHomePage ? 5.5 : 8.5} lg={isHomePage ? 5.5 : 9}>
+          {/* MIDDLE CONTENT: 🌟 সাইডবারের ঠিক ডান পাশে প্রফেশনাল ফেসবুক লেআউটের মতো প্যারালাল লাইনে সেট হবে */}
+          <Grid item xs={12} md={isHomePage ? 8.5 : 8.5} lg={isHomePage ? 6 : 9} sx={{ mt: 0 }}>
             <Box sx={{ 
               width: '100%', 
               minHeight: '100vh', 
@@ -161,47 +163,13 @@ const HomePage = () => {
 
           {/* RIGHT SIDEBAR */}
           {isHomePage && (
-            <Grid item xs={0} lg={3.5} sx={{ display: { xs: 'none', lg: 'block' }, pl: 2.5 }}>
+            <Grid item xs={0} lg={3} sx={{ display: { xs: 'none', lg: 'block' }, pl: 1 }}>
               <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
                 <HomeRight />
               </Box>
             </Grid>
           )}
         </Grid>
-
-        {/* --- MOBILE BOTTOM NAVIGATION --- */}
-        <Box sx={{ 
-          display: { xs: 'flex', md: 'none' },
-          position: 'fixed', bottom: 0, left: 0, right: 0,
-          height: '70px', bgcolor: 'rgba(15, 23, 42, 0.95)',
-          backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(255,255,255,0.1)',
-          justifyContent: 'space-around', alignItems: 'center', zIndex: 1000,
-          px: 2
-        }}>
-          <IconButton onClick={() => navigate("/")} sx={{ color: location.pathname === "/" ? currentTheme.accent : "white" }}>
-            <HomeIcon fontSize="large" />
-          </IconButton>
-
-          <IconButton onClick={() => navigate("/reels")} sx={{ color: location.pathname === "/reels" ? currentTheme.accent : "white" }}>
-            <ExploreIcon fontSize="large" />
-          </IconButton>
-
-          <IconButton onClick={() => navigate("/create-reels")} sx={{ 
-            background: `linear-gradient(45deg, ${currentTheme.accent}, #a855f7)`, 
-            color: 'white', borderRadius: '15px', p: 1,
-            boxShadow: `0 4px 15px ${currentTheme.glow}`
-          }}>
-            <AddCircleIcon fontSize="large" />
-          </IconButton>
-
-          <IconButton onClick={() => navigate(`/message/${user?.id}`)} sx={{ color: location.pathname.includes("/message") ? currentTheme.accent : "white" }}>
-            <MessageIcon fontSize="large" />
-          </IconButton>
-
-          <IconButton onClick={() => navigate(`/profile/${user?.id}`)}>
-            <Avatar src={user?.profileImage} sx={{ width: 32, height: 32, border: location.pathname.includes("/profile") ? `2px solid ${currentTheme.accent}` : 'none' }} />
-          </IconButton>
-        </Box>
       </Box>
     </MoodContext.Provider>
   );

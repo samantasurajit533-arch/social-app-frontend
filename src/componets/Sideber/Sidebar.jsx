@@ -30,9 +30,9 @@ const Sidebar = () => {
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
-      height: '100%', // 🌟 ফিক্সড: 100vh ফেলে 100% করা হলো যাতে এটি মাঝখানের ফিডকে নিচে ধাক্কা না দেয়
-      py: 2.5, 
-      px: 2.5, // 🌟 বামদিকের দেয়াল থেকে সেফটি মার্জিনাল গ্যাপ
+      height: '100%', // 🌟 ফিক্সড: এটি এখন হোমপেজ গ্রিডের ভেতরেই সীমাবদ্ধ থাকবে
+      py: 2, 
+      px: 2,
       bgcolor: 'transparent',
       color: 'white',
       overflow: 'hidden',
@@ -117,7 +117,7 @@ const Sidebar = () => {
               {user?.firstName?.[0]}
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <Typography sx={{ pigeon: 'hidden', fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user ? `${user.firstName} ${user.lastName || ''}` : "User"}
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', display: 'block' }}>
@@ -135,13 +135,14 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* DESKTOP SIDEBAR CONTAINER (🌟 ফ্লেক্সিবল গ্রিড স্পেস ১০০% লক) */}
+      {/* 🌟 DESKTOP SIDEBAR BOX FIX (260px ফিক্সড উইথ এবং স্টিকি সম্পূর্ণ রিমুভ করা হয়েছে) */}
       <Box sx={{ 
         display: { xs: 'none', md: 'flex' }, 
         flexDirection: 'column', 
         height: '100%', 
-        width: '100%', 
-        bgcolor: 'transparent'
+        width: '100%', // 🌟 ফিক্সড: এটি এখন মেইন গ্রিডের সাইজ অনুযায়ী ফ্লেক্সিবল থাকবে, ওভারফ্লো করবে না
+        bgcolor: 'transparent',
+        boxSizing: 'border-box'
       }}>
         {SidebarContent}
       </Box>
