@@ -30,13 +30,13 @@ const Sidebar = () => {
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
-      height: '100%', // 🌟 ফিক্সড: 100vh পরিবর্তন করে 100% করা হয়েছে যাতে সাইডবার হোস্টিং গ্রিড বক্সের বাইরে না যায়
+      height: '100%', // 🌟 ফিক্সড: 100vh ফেলে 100% করা হলো যাতে এটি মাঝখানের ফিডকে নিচে ধাক্কা না দেয়
       py: 2.5, 
-      px: 2.5, //
+      px: 2.5, // 🌟 বামদিকের দেয়াল থেকে সেফটি মার্জিনাল গ্যাপ
       bgcolor: 'transparent',
       color: 'white',
       overflow: 'hidden',
-      boxSizing: 'border-box' // প্যাডিং যেন হাইট-উইথ নষ্ট না করে
+      boxSizing: 'border-box'
     }}>
       {/* TOP SECTION: Logo and Nav Links */}
       <Box sx={{ 
@@ -95,7 +95,7 @@ const Sidebar = () => {
         </Box>
       </Box>
 
-      {/* BOTTOM SECTION: USER PROFILE (Pinned to bottom safely) */}
+      {/* BOTTOM SECTION: USER PROFILE */}
       <Box sx={{ 
         pt: 2, 
         mt: 1, 
@@ -116,7 +116,7 @@ const Sidebar = () => {
             >
               {user?.firstName?.[0]}
             </Avatar>
-            <Box sx={{ minWidth: 0 }}> {/* Prevents text from pushing layouts out of bounds */}
+            <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user ? `${user.firstName} ${user.lastName || ''}` : "User"}
               </Typography>
@@ -132,21 +132,21 @@ const Sidebar = () => {
       </Box>
     </Box>
   );
-// Sidebar.jsx ফাইলের একদম নিচের রিটার্ন (return) স্টেটমেন্টের অংশটুকু পরিবর্তন করে এটি দিন:
+
   return (
     <>
-      {/* 🌟 ডেস্কটপ সাইডবার কন্টেইনার (কোনো ফিক্সড পিক্সেল ছাড়া ১০০% রেসপন্সিভ) */}
+      {/* DESKTOP SIDEBAR CONTAINER (🌟 ফ্লেক্সিবল গ্রিড স্পেস ১০০% লক) */}
       <Box sx={{ 
         display: { xs: 'none', md: 'flex' }, 
         flexDirection: 'column', 
         height: '100%', 
-        width: '100%', // গ্রিডের ভেতরের স্পেসিং মেনে চলবে
+        width: '100%', 
         bgcolor: 'transparent'
       }}>
         {SidebarContent}
       </Box>
 
-      {/* MOBILE BOTTOM NAV: Floating Glass Pill */}
+      {/* MOBILE BOTTOM NAV */}
       <Box sx={{ 
         display: { xs: 'flex', md: 'none' }, 
         bottom: 20, 
@@ -230,6 +230,5 @@ const Sidebar = () => {
     </>
   )
 }
-
 
 export default Sidebar;
