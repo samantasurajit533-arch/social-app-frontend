@@ -90,11 +90,12 @@ const HomePage = () => {
       <Box sx={{ 
         background: currentTheme.bg, 
         minHeight: '100vh', 
-        width: '100vw', // 
+        width: '100%', 
         color: 'white', 
         pb: { xs: 10, md: 0 }, 
         transition: 'background 0.8s ease-in-out',
-        overflowX: 'hidden' 
+        overflowX: 'hidden',
+        boxSizing: 'border-box'
       }}>
         
         {isHomePage && currentTheme.text && (
@@ -104,16 +105,23 @@ const HomePage = () => {
           </Box>
         )}
 
-        
-        <Grid container sx={{ 
-          px: { xs: 1, sm: 2, md: 4, lg: 5 }, 
-          width: '100%', 
-          mx: 'auto',
-          boxSizing: 'border-box'
-        }}>
+        {/* 🌟 গ্রিড কন্টেইনারে মেইন ফিক্স: justifyContent="center" এবং মার্জিন অটো করা হয়েছে যাতে ওয়েবসাইট মাঝখানে থাকে */}
+        <Grid 
+          container 
+          spacing={3} 
+          justifyContent="center" 
+          sx={{ 
+            width: '100%', 
+            maxWidth: '1440px', // ডেস্কটপে ম্যাক্স সাইজ লক করা হলো
+            mx: 'auto', // 🌟 পুরো ওয়েবসাইটকে স্ক্রিনের মাঝখানে নিয়ে আসবে, বামে চাপবে না
+            px: { xs: 1, sm: 3, md: 4, lg: 6 }, // 🌟 বাম দিকে বড় সেফটি গ্যাপ তৈরি করা হলো
+            boxSizing: 'border-box',
+            mt: 1
+          }}
+        >
           
-          {/* LEFT NAV: Sidebar */}
-          <Grid item xs={0} md={3} lg={2.5} sx={{ display: { xs: 'none', md: 'block' }, pr: { md: 2, lg: 3 } }}>
+          {/* LEFT NAV: Sidebar (এর গ্রিড সাইজ বাড়ানো হয়েছে যাতে স্পেস পায়) */}
+          <Grid item xs={0} md={3.5} lg={3} sx={{ display: { xs: 'none', md: 'block' } }}>
             <Box sx={{ 
               position: 'sticky', top: 20, 
               height: 'calc(100vh - 40px)', 
@@ -123,25 +131,23 @@ const HomePage = () => {
               border: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'rgba(255,255,255,0.06)'}`,
               boxShadow: `0 4px 20px ${currentTheme.glow}`,
               transition: 'all 0.5s ease',
-              mt: 2
+              boxSizing: 'border-box'
             }}>
               <Sidebar />
             </Box>
           </Grid>
 
-          {}
-          <Grid item xs={12} md={isHomePage ? 6 : 9} lg={isHomePage ? 6 : 9.5} sx={{ mt: 2 }}>
+          {/* MIDDLE CONTENT */}
+          <Grid item xs={12} md={isHomePage ? 5.5 : 8.5} lg={isHomePage ? 5.5 : 9}>
             <Box sx={{ 
               width: '100%', 
-              maxWidth: '100%', 
               minHeight: '100vh', 
               borderRadius: { md: 4 },
               bgcolor: 'rgba(30, 41, 59, 0.15)', 
               p: { xs: 1.5, md: 3 },
               border: { md: `1px solid ${userMood !== "NORMAL" ? currentTheme.glow : 'transparent'}` },
               transition: 'all 0.5s ease',
-              boxSizing: 'border-box',
-              overflow: 'hidden' 
+              boxSizing: 'border-box'
             }}>
               <Routes>
                 <Route path="/" element={<MiddlePart />} />
@@ -155,7 +161,7 @@ const HomePage = () => {
 
           {/* RIGHT SIDEBAR */}
           {isHomePage && (
-            <Grid item xs={0} lg={3.5} sx={{ display: { xs: 'none', lg: 'block' }, pl: 3, mt: 2 }}>
+            <Grid item xs={0} md={3} lg={3.5} sx={{ display: { xs: 'none', md: 'none', lg: 'block' } }}>
               <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
                 <HomeRight />
               </Box>
