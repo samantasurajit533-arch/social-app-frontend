@@ -30,24 +30,25 @@ const Sidebar = () => {
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
-      height: '100vh', // FIXED: Changed h: '100%' to height: '100vh'
-      py: 3, 
-      px: 2,
+      height: '100%', // 🌟 ফিক্সড: 100vh পরিবর্তন করে 100% করা হয়েছে যাতে সাইডবার হোস্টিং গ্রিড বক্সের বাইরে না যায়
+      py: 2.5, 
+      px: 2.5, //
       bgcolor: 'transparent',
       color: 'white',
-      overflow: 'hidden' // Prevents the whole sidebar from having a double scrollbar
+      overflow: 'hidden',
+      boxSizing: 'border-box' // প্যাডিং যেন হাইট-উইথ নষ্ট না করে
     }}>
       {/* TOP SECTION: Logo and Nav Links */}
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        overflowY: 'auto', // Allows links to scroll if there are too many
+        overflowY: 'auto', 
         flexGrow: 1,
-        pr: 1
+        pr: 0.5
       }} className="no-scrollbar">
         
         {/* LOGO */}
-        <Box sx={{ pb: 6, px: 2 }}>
+        <Box sx={{ pb: 4, px: 1 }}>
           <Typography variant="h4" sx={{ 
             fontWeight: 900, 
             fontStyle: 'italic', 
@@ -61,7 +62,7 @@ const Sidebar = () => {
         </Box>
 
         {/* NAVIGATION LINKS */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {navigationMenu.map((item, index) => {
             const isActive = location.pathname === item.path;
             return (
@@ -73,53 +74,59 @@ const Sidebar = () => {
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: 2, 
-                  p: 1.5, 
-                  borderRadius: '16px',
+                  p: 1.2, 
+                  borderRadius: '14px',
                   transition: '0.3s',
-                  bgcolor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                  color: isActive ? '#818cf8' : 'rgba(255,255,255,0.7)',
-                  border: isActive ? '1px solid rgba(99, 102, 241, 0.3)' : '1px solid transparent',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', color: 'white' }
+                  bgcolor: isActive ? 'rgba(99, 102, 241, 0.12)' : 'transparent',
+                  color: isActive ? '#818cf8' : 'rgba(255,255,255,0.65)',
+                  border: isActive ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid transparent',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.04)', color: 'white' }
                 }}
               >
-                <Box sx={{ fontSize: '1.5rem', opacity: isActive ? 1 : 0.7 }}>{item.icon}</Box>
-                <Typography sx={{ fontWeight: isActive ? 700 : 500, fontSize: '1.1rem' }}>{item.title}</Typography>
+                <Box sx={{ fontSize: '1.4rem', display: 'flex', alignItems: 'center', opacity: isActive ? 1 : 0.65 }}>
+                  {item.icon}
+                </Box>
+                <Typography sx={{ fontWeight: isActive ? 700 : 500, fontSize: '1rem' }}>
+                  {item.title}
+                </Typography>
               </Box>
             );
           })}
         </Box>
       </Box>
 
-      {/* BOTTOM SECTION: USER PROFILE (Pinned to bottom) */}
+      {/* BOTTOM SECTION: USER PROFILE (Pinned to bottom safely) */}
       <Box sx={{ 
         pt: 2, 
-        mt: 2, 
-        borderTop: '1px solid rgba(255,255,255,0.1)' // Stronger border for visibility
+        mt: 1, 
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        px: 0.5
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
             <Avatar 
                 src={user?.profileImage} 
                 sx={{ 
-                    width: 42, 
-                    height: 42, 
+                    width: 38, 
+                    height: 38, 
                     border: '2px solid #6366f1',
-                    bgcolor: '#6366f1' 
+                    bgcolor: '#6366f1',
+                    fontSize: '0.9rem'
                 }}
             >
               {user?.firstName?.[0]}
             </Avatar>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', lineHeight: 1.2 }}>
+            <Box sx={{ minWidth: 0 }}> {/* Prevents text from pushing layouts out of bounds */}
+              <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user ? `${user.firstName} ${user.lastName || ''}` : "User"}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', display: 'block' }}>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', display: 'block' }}>
                 {user ? `@${user.firstName.toLowerCase()}` : "@active"}
               </Typography>
             </Box>
           </Box>
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: 'white' }}>
-            <MoreVertIcon/>
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small" sx={{ color: 'white', p: 0.5 }}>
+            <MoreVertIcon fontSize="small"/>
           </IconButton>
         </Box>
       </Box>
@@ -132,12 +139,9 @@ const Sidebar = () => {
       <Box sx={{ 
         display: { xs: 'none', md: 'flex' }, 
         flexDirection: 'column', 
-        height: '100vh', 
-        position: 'sticky', 
-        top: 0, 
-        width: '260px',
-        bgcolor: 'transparent',
-        borderRight: '1px solid rgba(255,255,255,0.05)'
+        height: '100%', // 🌟 ফিক্সড: ফ্লেক্সিবল গ্রিড হাইট ট্র্যাকিং চালু করা হয়েছে
+        width: '100%', // 🌟 ফিক্সড: ফিক্সড 260px রিমুভ করে গ্রিড বাউন্ডারি মেনে চলার অনুমতি দেওয়া হয়েছে
+        bgcolor: 'transparent'
       }}>
         {SidebarContent}
       </Box>
@@ -145,7 +149,7 @@ const Sidebar = () => {
       {/* MOBILE BOTTOM NAV: Floating Glass Pill */}
       <Box sx={{ 
         display: { xs: 'flex', md: 'none' }, 
-        bottom: 20, // Floating off the bottom
+        bottom: 20, 
         left: '5%', 
         width: '90%', 
         position: 'fixed',
