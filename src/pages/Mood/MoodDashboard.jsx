@@ -41,7 +41,8 @@ function Bar({ value, color, glow, animated }) {
 }
 
 // ─── main component ───────────────────────────────────────────
-export default function MoodDashboard() {
+export default function MoodDashboard(){
+
   const [form, setForm] = useState({
     userId: "user_001",
     recentComments: "",

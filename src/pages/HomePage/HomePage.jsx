@@ -18,6 +18,7 @@ import CreateReelsFrom from '../../componets/Reels/CreateReelsFrom';
 import Profile from '../profile/Profile';
 import HomeRight from '../../componets/HomeRight/HomeRight';
 import Message from '../Message/Message';
+import MoodPage from '../Mood/MoodPage';
 
 export const MoodContext = createContext();
 
@@ -157,6 +158,8 @@ const HomePage = () => {
                 <Route path="/create-reels" element={<CreateReelsFrom />} />
                 <Route path="/message/:id" element={<Message />} />
                 <Route path="/profile/:id" element={<Profile />} />
+                <Route path="/moodpage/:userId" element={<MoodPage />} />
+
               </Routes>
             </Box>
           </Grid>

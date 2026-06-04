@@ -15,7 +15,7 @@ const Sidebar = () => {
   const handleNavigate = (item) => {
     const path = item.title === "Message" ? `/message/${user?.id}` : 
                  item.title === "Profile" ? `/profile/${user?.id}` : 
-                 item.title == "Mood" ?`/moodpage/${user?.id}`:
+                 item.title == "Mood" ? `/moodpage/${user?.id}`:
                  item.path.toLowerCase();
     navigate(path);
     setMobileOpen(false);
