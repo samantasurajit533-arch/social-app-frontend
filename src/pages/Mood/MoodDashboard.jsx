@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams } from "react-router-dom";
 
-// ─── constants ───────────────────────────────────────────────
-const API = "https://social-app-backend-pogv.onrender.com";
+// ─── config ──────────────────────────────────────────────────
+const API = process.env.REACT_APP_API_URL || "";
 
 const MOOD_CONFIG = {
   HAPPY:  { label: "Happy",   accent: "#22c55e", dim: "#052e16", symbol: "◉", ring: "#166534" },
@@ -11,9 +12,9 @@ const MOOD_CONFIG = {
 };
 
 const SCORE_BARS = [
-  { key: "happinessScore", label: "Happiness", color: "#22c55e", glow: "#22c55e55" },
-  { key: "sadnessScore",   label: "Sadness",   color: "#60a5fa", glow: "#60a5fa55" },
-  { key: "stressScore",    label: "Stress",    color: "#f87171", glow: "#f8717155" },
+  { key: "happinessScore", label: "Happiness", color: "#22c55e", glow: "#22c55e44" },
+  { key: "sadnessScore",   label: "Sadness",   color: "#60a5fa", glow: "#60a5fa44" },
+  { key: "stressScore",    label: "Stress",    color: "#f87171", glow: "#f8717144" },
 ];
 
 // ─── animated bar ────────────────────────────────────────────
@@ -26,448 +27,426 @@ function Bar({ value, color, glow, animated }) {
   }, [value, animated]);
 
   return (
-    <div style={{
-      position: "relative", height: 8, borderRadius: 99,
-      background: "rgba(255,255,255,0.06)", overflow: "visible",
-    }}>
+    <div style={{ height: 7, borderRadius: 99, background: "rgba(255,255,255,0.06)" }}>
       <div style={{
         height: "100%", width: `${w}%`, borderRadius: 99,
         background: color,
-        boxShadow: animated && w > 0 ? `0 0 12px ${glow}` : "none",
+        boxShadow: animated && w > 0 ? `0 0 10px ${glow}` : "none",
         transition: animated ? "width 1.3s cubic-bezier(0.16,1,0.3,1)" : "none",
       }} />
     </div>
   );
 }
 
-// ─── main component ───────────────────────────────────────────
-export default function MoodDashboard(){
+// ─── main ─────────────────────────────────────────────────────
+export default function MoodDashboard() {
+  const { userId } = useParams();
 
-  const [form, setForm] = useState({
-    userId: "user_001",
-    recentComments: "",
-    scrolledCategories: "music,education",
-    watchTime: 20,
-    repeatViews: 1,
-  });
-  const [result, setResult]     = useState(null);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
-  const [cooldown, setCooldown] = useState(0);
-  const [animated, setAnimated] = useState(false);
-  const timerRef = useRef(null);
+  // ── tracker state ─────────────────────────────────────────
+  const [watchTime,    setWatchTime]    = useState(0);
+  const [repeatViews,  setRepeatViews]  = useState(0);
+  const [comments,     setComments]     = useState([]);
+  const [categories,   setCategories]   = useState([]);
+  const [isTracking,   setIsTracking]   = useState(true);
 
-  useEffect(() => () => clearInterval(timerRef.current), []);
+  // ── result state ──────────────────────────────────────────
+  const [result,    setResult]    = useState(null);
+  const [loading,   setLoading]   = useState(false);
+  const [animated,  setAnimated]  = useState(false);
+  const [analyzed,  setAnalyzed]  = useState(false);
+  const [lastTime,  setLastTime]  = useState(null);
+  const [nextIn,    setNextIn]    = useState(0);
 
-  const startCooldown = () => {
-    setCooldown(60);
-    timerRef.current = setInterval(() => {
-      setCooldown(c => {
-        if (c <= 1) { clearInterval(timerRef.current); return 0; }
-        return c - 1;
-      });
+  // ── refs ──────────────────────────────────────────────────
+  const watchRef      = useRef(null);
+  const countdownRef  = useRef(null);
+  const scrollRef     = useRef(0);
+  const pageVisitRef  = useRef(Date.now());
+
+  // ── TRACK: watch time (increments every second while on page) ─
+  useEffect(() => {
+    if (!isTracking) return;
+    watchRef.current = setInterval(() => {
+      setWatchTime(t => t + 1);
     }, 1000);
-  };
+    return () => clearInterval(watchRef.current);
+  }, [isTracking]);
 
-  const analyze = async () => {
-    if (loading || cooldown > 0) return;
-    setLoading(true); setError(null); setAnimated(false);
+  // ── TRACK: scroll depth → derives categories & repeat views ──
+  useEffect(() => {
+    const handleScroll = () => {
+      const depth = Math.round(
+        (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
+      );
+      if (depth > scrollRef.current) {
+        scrollRef.current = depth;
+        // derive categories from scroll depth bands
+        const cats = [];
+        if (depth > 10) cats.push("general");
+        if (depth > 30) cats.push("trending");
+        if (depth > 60) cats.push("deep-content");
+        if (depth > 85) cats.push("long-form");
+        setCategories(cats);
+        // count as a repeat view every time user scrolls back to top
+        if (depth < 5 && scrollRef.current > 50) {
+          setRepeatViews(v => v + 1);
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ── TRACK: capture comments from Redux store via localStorage ─
+  // (reads the last comment the user typed anywhere in the app)
+  useEffect(() => {
+    const stored = localStorage.getItem("lastUserComment") || "";
+    if (stored) setComments([stored]);
+  }, []);
+
+  // ── AUTO-ANALYZE: triggers when watchTime hits 35s threshold ──
+  const analyze = useCallback(async () => {
+    if (loading) return;
+
+    // cooldown: don't re-analyze within 60s
+    if (lastTime && Date.now() - lastTime < 60000) return;
+
+    setLoading(true);
+    setAnimated(false);
+
+    const payload = {
+      userId:             userId || "user_001",
+      recentComments:     comments.join(" "),
+      scrolledCategories: categories.join(","),
+      watchTime:          watchTime,
+      repeatViews:        repeatViews,
+    };
+
     try {
-      const res = await fetch(`${API}/api/ai/mood/analyze`, {
-        method: "POST",
+      const res  = await fetch(`${API}/api/ai/mood/analyze`, {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          watchTime: Number(form.watchTime),
-          repeatViews: Number(form.repeatViews),
-        }),
+        body:    JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.cooldown) {
-        setError("Already analyzed recently. Please wait.");
-        startCooldown();
-        return;
+
+      if (data.success && !data.cooldown) {
+        setResult(data);
+        setAnimated(true);
+        setAnalyzed(true);
+        setLastTime(Date.now());
+        setIsTracking(false); // stop tracking after first analysis
+
+        // restart tracking + countdown for next analysis
+        startNextCountdown();
       }
-      if (!data.success) throw new Error(data.message || "Analysis failed");
-      setResult(data);
-      setAnimated(true);
-      startCooldown();
     } catch (e) {
-      setError(e.message);
+      console.error("Mood analyze error:", e);
     } finally {
       setLoading(false);
     }
+  }, [userId, comments, categories, watchTime, repeatViews, loading, lastTime]);
+
+  // ── trigger analyze when watchTime reaches 35 seconds ────────
+  useEffect(() => {
+    if (watchTime >= 35 && !analyzed && !loading) {
+      analyze();
+    }
+  }, [watchTime, analyzed, loading, analyze]);
+
+  // ── countdown for next auto-refresh (every 5 minutes) ────────
+  const startNextCountdown = () => {
+    let secs = 300; // 5 minutes
+    setNextIn(secs);
+    clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      secs -= 1;
+      setNextIn(secs);
+      if (secs <= 0) {
+        clearInterval(countdownRef.current);
+        setAnalyzed(false);
+        setIsTracking(true);
+        setWatchTime(0);
+      }
+    }, 1000);
   };
 
+  useEffect(() => () => {
+    clearInterval(watchRef.current);
+    clearInterval(countdownRef.current);
+  }, []);
+
   const mood = result ? (MOOD_CONFIG[result.mood] || MOOD_CONFIG.NORMAL) : null;
+
+  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
-
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .md-root {
           min-height: 100vh;
-          background: #080c12;
+          background: transparent;
           font-family: 'JetBrains Mono', monospace;
           padding: clamp(16px, 4vw, 48px);
           color: #e2e8f0;
         }
+        .md-wrap { max-width: 560px; margin: 0 auto; }
 
-        .md-wrap {
-          max-width: 560px;
-          margin: 0 auto;
-          width: 100%;
-        }
-
-        /* ── header ── */
-        .md-header { margin-bottom: clamp(28px, 6vw, 48px); }
+        /* header */
+        .md-header { margin-bottom: clamp(24px, 5vw, 40px); }
         .md-title {
           font-family: 'Syne', sans-serif;
           font-size: clamp(32px, 8vw, 52px);
-          font-weight: 800;
-          color: #f8fafc;
-          letter-spacing: -0.03em;
-          line-height: 1.05;
+          font-weight: 800; color: #f8fafc;
+          letter-spacing: -0.03em; line-height: 1.05;
         }
         .md-title span { color: #60a5fa; }
         .md-sub {
           font-size: clamp(10px, 2.5vw, 12px);
-          color: #334155;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          margin-top: 10px;
+          color: #334155; letter-spacing: 0.15em;
+          text-transform: uppercase; margin-top: 8px;
         }
 
-        /* ── form card ── */
-        .md-card {
+        /* tracker card */
+        .md-tracker {
           background: #0f1623;
           border: 1px solid #1e293b;
           border-radius: 16px;
-          padding: clamp(16px, 4vw, 28px);
-          margin-bottom: 14px;
-        }
-
-        /* ── labels ── */
-        .md-label {
-          display: block;
-          font-size: 10px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #334155;
-          margin-bottom: 7px;
-        }
-
-        /* ── inputs ── */
-        .md-input {
-          width: 100%;
-          background: #080c12;
-          border: 1px solid #1e293b;
-          border-radius: 8px;
-          color: #cbd5e1;
-          font-size: clamp(12px, 3vw, 13px);
-          font-family: 'JetBrains Mono', monospace;
-          padding: 10px 12px;
-          outline: none;
-          transition: border-color 0.2s;
-          -webkit-appearance: none;
-        }
-        .md-input:focus { border-color: #334155; }
-        .md-textarea { resize: vertical; min-height: 68px; }
-
-        /* ── 2-col grid collapses on mobile ── */
-        .md-grid {
+          padding: clamp(14px, 3vw, 22px);
+          margin-bottom: 16px;
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          gap: 12px;
+        }
+        .md-stat { text-align: center; padding: 8px; }
+        .md-stat-val {
+          font-size: clamp(22px, 5vw, 30px);
+          font-weight: 500; line-height: 1;
+          color: #60a5fa;
+          font-family: 'JetBrains Mono', monospace;
+        }
+        .md-stat-label {
+          font-size: 10px; color: #334155;
+          text-transform: uppercase; letter-spacing: 0.1em;
+          margin-top: 5px;
         }
 
-        /* ── range sliders ── */
-        .md-range-label {
+        /* loading state */
+        .md-loading {
+          background: #0f1623;
+          border: 1px solid #1e293b;
+          border-radius: 16px;
+          padding: clamp(28px, 6vw, 48px) clamp(16px, 4vw, 28px);
+          text-align: center;
+          margin-bottom: 16px;
+        }
+        .md-loading-symbol {
+          font-size: 42px; margin-bottom: 14px;
+          animation: breathe 2s ease-in-out infinite;
+        }
+        .md-loading-text {
+          font-size: 13px; color: #475569;
+          letter-spacing: 0.08em;
+        }
+        .md-progress-track {
+          height: 3px; background: #1e293b;
+          border-radius: 99px; margin: 16px 0 8px;
+          overflow: hidden;
+        }
+        .md-progress-fill {
+          height: 100%; background: #60a5fa;
+          border-radius: 99px;
+          transition: width 1s linear;
+        }
+        .md-progress-label {
+          font-size: 11px; color: #334155;
           display: flex; justify-content: space-between;
-          font-size: 10px; color: #334155; letter-spacing: 0.1em;
-          text-transform: uppercase; margin-bottom: 10px;
-        }
-        .md-range-label span { color: #60a5fa; }
-        input[type=range] {
-          width: 100%;
-          accent-color: #60a5fa;
-          cursor: pointer;
         }
 
-        /* ── button ── */
-        .md-btn {
-          width: 100%;
-          padding: clamp(13px, 3vw, 16px);
-          background: #f8fafc;
-          color: #080c12;
-          border: none;
-          border-radius: 10px;
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(14px, 3.5vw, 16px);
-          font-weight: 700;
-          cursor: pointer;
-          letter-spacing: 0.02em;
-          transition: opacity 0.2s, transform 0.12s;
-          margin-top: 4px;
-          -webkit-tap-highlight-color: transparent;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-        }
-        .md-btn:hover:not(:disabled) { opacity: 0.88; }
-        .md-btn:active:not(:disabled) { transform: scale(0.97); }
-        .md-btn:disabled { opacity: 0.25; cursor: not-allowed; }
-        .md-btn.loading { background: #1e293b; color: #475569; }
-
-        /* ── error ── */
-        .md-error {
-          background: #1a0606;
-          border: 1px solid #450a0a;
-          border-radius: 8px;
-          padding: 10px 14px;
-          color: #f87171;
-          font-size: clamp(11px, 2.8vw, 12px);
-          margin-top: 12px;
-          line-height: 1.5;
-        }
-
-        /* ── result section ── */
-        .md-result { margin-top: 20px; }
-
-        /* ── mood hero card ── */
+        /* mood hero */
         .md-mood-hero {
           border-radius: 16px;
           padding: clamp(18px, 5vw, 28px);
           margin-bottom: 14px;
-          display: flex;
-          align-items: center;
+          display: flex; align-items: center;
           gap: clamp(14px, 4vw, 24px);
           border: 1px solid transparent;
           animation: fadeUp 0.45s ease both;
         }
-        .md-mood-symbol {
-          font-size: clamp(38px, 10vw, 56px);
-          line-height: 1;
-          flex-shrink: 0;
-        }
+        .md-mood-symbol { font-size: clamp(40px, 10vw, 58px); line-height: 1; flex-shrink: 0; }
         .md-mood-label {
           font-family: 'Syne', sans-serif;
-          font-size: clamp(22px, 6vw, 34px);
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          line-height: 1;
+          font-size: clamp(24px, 6vw, 34px);
+          font-weight: 800; letter-spacing: -0.02em; line-height: 1;
         }
         .md-mood-meta {
-          font-size: clamp(10px, 2.5vw, 11px);
-          color: #475569;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          margin-top: 6px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          align-items: center;
+          font-size: 11px; color: #475569;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          margin-top: 6px; display: flex; flex-wrap: wrap; gap: 10px;
         }
         .md-ai-dot {
-          display: inline-block;
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: #22c55e;
-          margin-right: 5px;
-          animation: pulse 2s infinite;
+          display: inline-block; width: 6px; height: 6px;
+          border-radius: 50%; background: #22c55e;
+          margin-right: 5px; animation: pulse 2s infinite;
           vertical-align: middle;
         }
 
-        /* ── scores card ── */
+        /* scores */
         .md-scores {
-          background: #0f1623;
-          border: 1px solid #1e293b;
-          border-radius: 16px;
-          padding: clamp(16px, 4vw, 24px);
+          background: #0f1623; border: 1px solid #1e293b;
+          border-radius: 16px; padding: clamp(16px, 4vw, 24px);
           margin-bottom: 14px;
           animation: fadeUp 0.45s 0.08s ease both;
         }
-        .md-score-row { margin-bottom: 22px; }
+        .md-score-row { margin-bottom: 20px; }
         .md-score-row:last-child { margin-bottom: 0; }
         .md-score-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: baseline;
-          margin-bottom: 10px;
+          display: flex; justify-content: space-between;
+          align-items: baseline; margin-bottom: 9px;
         }
-        .md-score-name {
-          font-size: clamp(10px, 2.5vw, 11px);
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: #475569;
-        }
-        .md-score-value {
-          font-size: clamp(18px, 5vw, 24px);
-          font-weight: 500;
-          line-height: 1;
-        }
+        .md-score-name { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+        .md-score-value { font-size: clamp(18px, 5vw, 24px); font-weight: 500; line-height: 1; }
         .md-score-denom { font-size: 10px; color: #334155; margin-left: 2px; }
 
-        /* ── protection banner ── */
+        /* protection */
         .md-protection {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          background: #1a0f00;
-          border: 1px solid #78350f;
+          display: flex; align-items: flex-start; gap: 10px;
+          background: #1a0f00; border: 1px solid #78350f;
           border-radius: 10px;
           padding: clamp(10px, 3vw, 14px) clamp(12px, 3vw, 16px);
-          font-size: clamp(11px, 2.8vw, 12px);
-          color: #fbbf24;
-          margin-bottom: 14px;
-          line-height: 1.6;
-          animation: fadeUp 0.45s 0.1s ease both;
+          font-size: 12px; color: #fbbf24; margin-bottom: 14px;
+          line-height: 1.6; animation: fadeUp 0.45s 0.1s ease both;
         }
 
-        /* ── tags card ── */
+        /* tags */
         .md-tags-card {
-          background: #0f1623;
-          border: 1px solid #1e293b;
-          border-radius: 16px;
-          padding: clamp(16px, 4vw, 24px);
+          background: #0f1623; border: 1px solid #1e293b;
+          border-radius: 16px; padding: clamp(16px, 4vw, 24px);
+          margin-bottom: 14px;
           animation: fadeUp 0.45s 0.16s ease both;
         }
-        .md-tag-section { margin-bottom: 16px; }
+        .md-tag-section { margin-bottom: 14px; }
         .md-tag-section:last-child { margin-bottom: 0; }
         .md-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .md-tag {
-          font-size: clamp(10px, 2.5vw, 11px);
-          padding: 4px 10px;
-          border-radius: 999px;
-          letter-spacing: 0.05em;
-          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px; padding: 4px 10px; border-radius: 999px;
+          letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;
         }
         .md-tag-block { background: #2d0a0a; color: #f87171; border: 1px solid #450a0a; }
         .md-tag-boost { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
 
-        /* ── misc ── */
-        .md-field { margin-bottom: 14px; }
-        .md-field:last-child { margin-bottom: 0; }
-        .md-divider { height: 1px; background: #1e293b; margin: 16px 0; }
+        /* next refresh */
+        .md-next {
+          background: #0f1623; border: 1px solid #1e293b;
+          border-radius: 12px;
+          padding: 12px 16px;
+          display: flex; align-items: center; justify-content: space-between;
+          font-size: 11px; color: #334155;
+          animation: fadeUp 0.45s 0.2s ease both;
+        }
+        .md-next span { color: #475569; }
+        .md-next strong { color: #60a5fa; font-family: 'JetBrains Mono', monospace; }
 
-        /* ── animations ── */
+        /* label */
+        .md-label {
+          display: block; font-size: 10px;
+          letter-spacing: 0.12em; text-transform: uppercase;
+          color: #334155; margin-bottom: 6px;
+        }
+
+        /* spinner */
+        .md-spinner {
+          width: 32px; height: 32px;
+          border: 2px solid #1e293b;
+          border-top-color: #60a5fa;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+          margin: 0 auto 16px;
+        }
+
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.3; }
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .md-spinner {
-          width: 14px; height: 14px;
-          border: 2px solid #1e293b;
-          border-top-color: #60a5fa;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-          flex-shrink: 0;
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes breathe {
+          0%,100% { transform: scale(1); opacity: 0.7; }
+          50%     { transform: scale(1.08); opacity: 1; }
         }
 
-        /* ── mobile ── */
         @media (max-width: 400px) {
-          .md-grid { grid-template-columns: 1fr; }
+          .md-tracker { grid-template-columns: repeat(2, 1fr); }
         }
       `}</style>
 
       <div className="md-root">
         <div className="md-wrap">
 
-          {/* ── header ── */}
+          {/* header */}
           <div className="md-header">
             <h1 className="md-title">Mood<br /><span>Analyzer</span></h1>
             <p className="md-sub">AI-powered emotional intelligence</p>
           </div>
 
-          {/* ── form card ── */}
-          <div className="md-card">
-
-            <div className="md-field">
-              <label className="md-label">User ID</label>
-              <input
-                className="md-input"
-                value={form.userId}
-                onChange={e => setForm(f => ({ ...f, userId: e.target.value }))}
-                placeholder="user_001"
-              />
+          {/* live tracker stats */}
+          <div className="md-tracker">
+            <div className="md-stat">
+              <div className="md-stat-val">{watchTime}s</div>
+              <div className="md-stat-label">Watch time</div>
             </div>
-
-            <div className="md-field">
-              <label className="md-label">Recent comments</label>
-              <textarea
-                className="md-input md-textarea"
-                placeholder="e.g. I feel so happy today, love this content!"
-                value={form.recentComments}
-                onChange={e => setForm(f => ({ ...f, recentComments: e.target.value }))}
-              />
+            <div className="md-stat">
+              <div className="md-stat-val">{Math.round(scrollRef.current)}%</div>
+              <div className="md-stat-label">Scroll depth</div>
             </div>
-
-            <div className="md-field">
-              <label className="md-label">Scrolled categories</label>
-              <input
-                className="md-input"
-                value={form.scrolledCategories}
-                placeholder="e.g. music, education, news"
-                onChange={e => setForm(f => ({ ...f, scrolledCategories: e.target.value }))}
-              />
+            <div className="md-stat">
+              <div className="md-stat-val">{repeatViews}</div>
+              <div className="md-stat-label">Repeat views</div>
             </div>
-
-            <div className="md-divider" />
-
-            <div className="md-grid">
-              <div>
-                <div className="md-range-label">
-                  Watch time <span>{form.watchTime}s</span>
-                </div>
-                <input
-                  type="range" min="0" max="120" step="1"
-                  value={form.watchTime}
-                  onChange={e => setForm(f => ({ ...f, watchTime: e.target.value }))}
-                />
+            <div className="md-stat">
+              <div className="md-stat-val" style={{ color: isTracking ? "#22c55e" : "#334155" }}>
+                {isTracking ? "ON" : "OFF"}
               </div>
-              <div>
-                <div className="md-range-label">
-                  Repeat views <span>{form.repeatViews}</span>
-                </div>
-                <input
-                  type="range" min="0" max="10" step="1"
-                  value={form.repeatViews}
-                  onChange={e => setForm(f => ({ ...f, repeatViews: e.target.value }))}
-                />
-              </div>
+              <div className="md-stat-label">Tracking</div>
             </div>
-
           </div>
 
-          {/* ── button ── */}
-          <button
-            className={`md-btn${loading ? " loading" : ""}`}
-            onClick={analyze}
-            disabled={loading || cooldown > 0}
-          >
-            {loading
-              ? <><div className="md-spinner" />Analyzing…</>
-              : cooldown > 0
-              ? `Wait ${cooldown}s`
-              : "Analyze Mood"}
-          </button>
+          {/* loading / waiting state */}
+          {!analyzed && !result && (
+            <div className="md-loading">
+              {loading ? (
+                <>
+                  <div className="md-spinner" />
+                  <div className="md-loading-text">Analyzing your emotional state…</div>
+                </>
+              ) : (
+                <>
+                  <div className="md-loading-symbol">◌</div>
+                  <div className="md-loading-text">
+                    Auto-analyzing after {35}s of activity
+                  </div>
+                  <div className="md-progress-track">
+                    <div
+                      className="md-progress-fill"
+                      style={{ width: `${Math.min((watchTime / 35) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="md-progress-label">
+                    <span>0s</span>
+                    <span style={{ color: "#60a5fa" }}>{watchTime}s</span>
+                    <span>35s</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
-          {error && <div className="md-error">{error}</div>}
-
-          {/* ── result ── */}
+          {/* results */}
           {result && mood && (
-            <div className="md-result">
-
+            <>
               {/* mood hero */}
               <div
                 className="md-mood-hero"
@@ -489,7 +468,7 @@ export default function MoodDashboard(){
                 </div>
               </div>
 
-              {/* protection banner */}
+              {/* protection */}
               {result.protectionMode && (
                 <div className="md-protection">
                   <span>⚠</span>
@@ -508,17 +487,12 @@ export default function MoodDashboard(){
                         <span className="md-score-denom">/100</span>
                       </span>
                     </div>
-                    <Bar
-                      value={result[s.key] ?? 0}
-                      color={s.color}
-                      glow={s.glow}
-                      animated={animated}
-                    />
+                    <Bar value={result[s.key] ?? 0} color={s.color} glow={s.glow} animated={animated} />
                   </div>
                 ))}
               </div>
 
-              {/* category tags */}
+              {/* tags */}
               {(result.blockCategories?.length > 0 || result.boostCategories?.length > 0) && (
                 <div className="md-tags-card">
                   {result.blockCategories?.length > 0 && (
@@ -544,7 +518,12 @@ export default function MoodDashboard(){
                 </div>
               )}
 
-            </div>
+              {/* next refresh countdown */}
+              <div className="md-next">
+                <span>Next auto-refresh in</span>
+                <strong>{fmt(nextIn)}</strong>
+              </div>
+            </>
           )}
 
         </div>
