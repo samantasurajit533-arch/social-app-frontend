@@ -6,6 +6,7 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import GroupIcon from '@mui/icons-material/Group';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MessageIcon from '@mui/icons-material/Message';
+import MoodIcon from '@mui/icons-material/Mood';
 
 
 
@@ -44,5 +45,10 @@ export const navigationMenu=[
     title:"Profile",
     icon:<AccountCircleIcon/>,
     path:"/profile"
-  }
+  },
+  {
+  title: "Mood",
+  icon: <Mood/>,
+  path: "/mood"
+}
 ]

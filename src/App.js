@@ -45,23 +45,20 @@ const uniqueTheme = createTheme({
 function App() {
   const dispatch = useDispatch();
 
-  // ✅ Read jwt from Redux state — updates reactively after login/register
   const { jwt, user, loading } = useSelector(state => state.auth);
 
-  // ✅ Derive token from Redux jwt OR localStorage (for page refresh)
   const token = jwt || localStorage.getItem("jwt");
   const isValidToken = token && token !== "null" && token !== "undefined";
 
   useEffect(() => {
-    // ✅ Runs on mount AND when jwt changes in Redux after login/register
     const freshToken = localStorage.getItem("jwt");
     const isValid = freshToken && freshToken !== "null" && freshToken !== "undefined";
     if (isValid && !user) {
       dispatch(getProfileAction());
     }
-  }, [jwt]); // ✅ jwt from Redux — triggers after REGISTER_SUCCESS/LOGIN_SUCCESS
+  }, [jwt]); 
 
-  // ✅ Show loading screen only during initial profile fetch
+
   if (loading && isValidToken && !user) {
     return (
       <ThemeProvider theme={uniqueTheme}>

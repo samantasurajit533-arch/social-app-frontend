@@ -15,6 +15,7 @@ const Sidebar = () => {
   const handleNavigate = (item) => {
     const path = item.title === "Message" ? `/message/${user?.id}` : 
                  item.title === "Profile" ? `/profile/${user?.id}` : 
+                 item.title == "Mood" ?`/moodpage/${user?.id}`:
                  item.path.toLowerCase();
     navigate(path);
     setMobileOpen(false);
@@ -30,7 +31,7 @@ const Sidebar = () => {
       display: 'flex', 
       flexDirection: 'column', 
       justifyContent: 'space-between', 
-      height: '100%', // 🌟 ফিক্সড: এটি এখন হোমপেজ গ্রিডের ভেতরেই সীমাবদ্ধ থাকবে
+      height: '100%',
       py: 2, 
       px: 2,
       bgcolor: 'transparent',
