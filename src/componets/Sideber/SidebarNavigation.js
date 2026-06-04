@@ -49,6 +49,6 @@ export const navigationMenu=[
   {
   title: "Mood",
   icon: <MoodIcon/>,
-  path: "/mood"
+  path: "/moodpage"
 }
 ]
