@@ -48,7 +48,7 @@ export const navigationMenu=[
   },
   {
   title: "Mood",
-  icon: <Mood/>,
+  icon: <MoodIcon/>,
   path: "/mood"
 }
 ]
