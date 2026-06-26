@@ -85,122 +85,129 @@ const HomePage = () => {
   };
 
   return (
-    <MoodContext.Provider value={{ userMood, blockFilters, refreshMoodStatus, sendBehaviorData }}>
-      <Box sx={{
-        background:  isReels ? '#000000' : t.bg,
-        minHeight:   '100vh',
-        height:      (isReels || isCreateReels || isMessage) ? '100vh' : 'auto',
-        width:       '100%',
-        color:       'white',
-        // Bottom padding to clear the persistent mobile bar safely
-        pb:          { xs: (isReels || isCreateReels || isMessage) ? 0 : '72px', md: 0 },
-        transition:  'background 0.8s ease-in-out',
-        overflow:    (isReels || isCreateReels || isMessage) ? 'hidden' : 'auto',
-        boxSizing:   'border-box',
-        position:    'relative'
-      }}>
-
-        {/* Mood banner - Hidden on Reels/Create to match clean immersive profiles */}
-        {isHomePage && t.text && (
-          <Box sx={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
-            bgcolor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(5px)',
-            py: 1, borderBottom: `1px solid ${t.glow}`,
-            boxShadow: `0 4px 30px ${t.glow}`,
-          }}>
-            <PsychologyIcon sx={{ color: t.accent, fontSize: '1.2rem' }} />
-            <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: t.accent, letterSpacing: '0.5px' }}>
-              {t.text}
-            </Typography>
-          </Box>
-        )}
-
-        <Grid container sx={{
-          width:    '100%',
-          maxWidth: '1200px',
-          mx:       'auto',
-          px:       { xs: 0, sm: 2, md: 3 }, // Edge-to-edge content on mobile
-          boxSizing:'border-box',
-          mt:       { xs: 0, md: 1 },
-          height:   (isReels || isCreateReels || isMessage) ? { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 56px)' } : 'auto',
-        }}>
-{/* LEFT COLUMN — Desktop Sidebar Only */}
-<Grid item xs={0} md={3} lg={2.5} sx={{ display: { xs: 'none', md: 'block' } }}>
+ <MoodContext.Provider value={{ userMood, blockFilters, refreshMoodStatus, sendBehaviorData }}>
   <Box sx={{
-    position:        'sticky',
-    top:             0,
-    height:          '100vh',
-    overflow:        'hidden', /* Prevents double scrollbar glitches */
-    boxSizing:       'border-box',
-    borderRight:     '1px solid rgba(255,255,255,0.06)', /* Separation line */
+    background:  isReels ? '#000000' : t.bg,
+    minHeight:   '100vh',
+    height:      (isReels || isCreateReels || isMessage) ? '100vh' : 'auto',
+    width:       '100%',
+    color:       'white',
+    // Bottom padding to clear the persistent mobile bar safely
+    pb:          { xs: (isReels || isCreateReels || isMessage) ? 0 : '72px', md: 0 },
+    transition:  'background 0.8s ease-in-out',
+    overflow:    (isReels || isCreateReels || isMessage) ? 'hidden' : 'auto',
+    boxSizing:   'border-box',
+    position:    'relative'
   }}>
-    <Sidebar />
-  </Box>
-</Grid>
 
+    {/* Mood banner - Hidden on Reels/Create to match clean immersive profiles */}
+    {isHomePage && t.text && (
+      <Box sx={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+        bgcolor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(5px)',
+        py: 1, borderBottom: `1px solid ${t.glow}`,
+        boxShadow: `0 4px 30px ${t.glow}`,
+      }}>
+        <PsychologyIcon sx={{ color: t.accent, fontSize: '1.2rem' }} />
+        <Typography sx={{ fontSize: '0.82rem', fontWeight: 600, color: t.accent, letterSpacing: '0.5px' }}>
+          {t.text}
+        </Typography>
+      </Box>
+    )}
 
-          {/* MIDDLE COLUMN — Content Display Grid */}
-          <Grid
-            item
-            xs={12}
-            md={isHomePage ? 8.5 : 8.5}
-            lg={isHomePage ? 6 : 9}
-            sx={{
-              height:    (isReels || isCreateReels || isMessage) ? '100%' : 'auto',
-              overflowY: (isReels || isCreateReels || isMessage) ? 'hidden' : 'visible',
-            }}
-          >
-            <Box sx={{
-              width:     '100%',
-              borderRadius: { xs: 0, md: 4 }, // Sharp edges on phone viewport
-              bgcolor:   (isReels || isCreateReels) ? 'transparent' : { xs: 'transparent', md: 'rgba(30,41,59,0.15)' },
-              p:         (isReels || isCreateReels || isMessage) ? 0 : { xs: 1.5, md: 2 },
-              border:    { md: isReels ? 'none' : `1px solid ${userMood !== "NORMAL" ? t.glow : 'transparent'}` },
-              transition:'all 0.5s ease',
-              boxSizing: 'border-box',
-              overflowX: 'hidden',
-              height:    (isReels || isCreateReels || isMessage) ? '100%' : 'auto',
-            }}>
-              <Routes>
-                <Route path="/"                 element={<MiddlePart />} />
-                <Route path="/reels"            element={<Reels />} />
-                <Route path="/create-reels"     element={<CreateReelsFrom />} />
-                <Route path="/message/:id"      element={<Message />} />
-                <Route path="/profile/:id"      element={<Profile />} />
-                <Route path="/moodpage/:userId" element={<MoodPage />} />
-              </Routes>
-            </Box>
-          </Grid>
+    {/* 🛠️ FIXED: Removed mt (margin-top) and added alignItems: 'stretch' to keep columns level */}
+    <Grid container sx={{
+      width:    '100%',
+      maxWidth: '1200px',
+      mx:       'auto',
+      px:       { xs: 0, sm: 2, md: 3 }, // Edge-to-edge content on mobile
+      boxSizing:'border-box',
+      alignItems: 'stretch', 
+      height:   (isReels || isCreateReels || isMessage) ? { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 56px)' } : 'auto',
+    }}>
 
-          {/* RIGHT COLUMN — Desktop Feed Utilities Only */}
-          {isHomePage && (
-            <Grid item xs={0} lg={3} sx={{ display: { xs: 'none', lg: 'block' }, pl: 1 }}>
-              <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
-                <HomeRight />
-              </Box>
-            </Grid>
-          )}
-
-        </Grid>
-
-        {/* INSTAGRAM-STYLE FIXED BOTTOM NAVIGATION BAR */}
+      {/* LEFT COLUMN — Desktop Sidebar Only */}
+      {/* 🛠️ FIXED: Reset md sizing to 3.5 to balance the 280px sidebar seamlessly */}
+      <Grid item xs={0} md={3.5} lg={3} sx={{ display: { xs: 'none', md: 'block' } }}>
         <Box sx={{
-          display: { xs: 'flex', md: 'none' },
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '64px',
-          bgcolor: isReels ? 'rgba(0, 0, 0, 0.95)' : 'rgba(7, 9, 13, 0.92)',
-          backdropFilter: 'blur(20px)',
-          borderTop: isReels ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${userMood !== "NORMAL" ? t.glow : 'rgba(255,255,255,0.08)'}`,
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          zIndex: 1300,
-          px: 1,
-          boxShadow: isReels ? 'none' : `0 -4px 20px ${t.glow}`,
-          transition: 'all 0.4s ease'
+          position:        'sticky',
+          top:             0,
+          height:          '100vh',
+          overflowY:       'auto',
+          overflowX:       'hidden',
+          boxSizing:       'border-box',
+          borderRight:     '1px solid rgba(255,255,255,0.06)', /* Clean separation line */
+          '&::-webkit-scrollbar': { display: 'none' },
+          msOverflowStyle: 'none',
+          scrollbarWidth:  'none',
         }}>
+          <Sidebar />
+        </Box>
+      </Grid>
+
+      {/* MIDDLE COLUMN — Content Display Grid */}
+      <Grid
+        item
+        xs={12}
+        md={isHomePage ? 8.5 : 8.5}
+        lg={isHomePage ? 6 : 9}
+        sx={{
+          height:    (isReels || isCreateReels || isMessage) ? '100%' : 'auto',
+          overflowY: (isReels || isCreateReels || isMessage) ? 'hidden' : 'visible',
+        }}
+      >
+        <Box sx={{
+          width:     '100%',
+          borderRadius: { xs: 0, md: 4 }, // Sharp edges on phone viewport
+          bgcolor:   (isReels || isCreateReels) ? 'transparent' : { xs: 'transparent', md: 'rgba(30,41,59,0.15)' },
+          p:         (isReels || isCreateReels || isMessage) ? 0 : { xs: 1.5, md: 2 },
+          border:    { md: isReels ? 'none' : `1px solid ${userMood !== "NORMAL" ? t.glow : 'transparent'}` },
+          transition:'all 0.5s ease',
+          boxSizing: 'border-box',
+          overflowX: 'hidden',
+          height:    (isReels || isCreateReels || isMessage) ? '100%' : 'auto',
+        }}>
+          <Routes>
+            <Route path="/"                 element={<MiddlePart />} />
+            <Route path="/reels"            element={<Reels />} />
+            <Route path="/create-reels"     element={<CreateReelsFrom />} />
+            <Route path="/message/:id"      element={<Message />} />
+            <Route path="/profile/:id"      element={<Profile />} />
+            <Route path="/moodpage/:userId" element={<MoodPage />} />
+          </Routes>
+        </Box>
+      </Grid>
+
+      {/* RIGHT COLUMN — Desktop Feed Utilities Only */}
+      {isHomePage && (
+        <Grid item xs={0} lg={3} sx={{ display: { xs: 'none', lg: 'block' }, pl: 1 }}>
+          <Box sx={{ position: 'sticky', top: 20, borderRadius: 4 }}>
+            <HomeRight />
+          </Box>
+        </Grid>
+      )}
+
+    </Grid>
+
+    {/* INSTAGRAM-STYLE FIXED BOTTOM NAVIGATION BAR */}
+    <Box sx={{
+      display: { xs: 'flex', md: 'none' },
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: '64px',
+      bgcolor: isReels ? 'rgba(0, 0, 0, 0.95)' : 'rgba(7, 9, 13, 0.92)',
+      backdropFilter: 'blur(20px)',
+      borderTop: isReels ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${userMood !== "NORMAL" ? t.glow : 'rgba(255,255,255,0.08)'}`,
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      zIndex: 1300,
+      px: 1,
+      boxShadow: isReels ? 'none' : `0 -4px 20px ${t.glow}`,
+      transition: 'all 0.4s ease'
+    }}>
+      {/* Mobile nav items go here */}
           {/* Home Tab */}
           <Box onClick={() => handleNav('/')} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', color: isHomePage ? t.accent : '#94a3b8', transition: 'transform 0.2s' }}>
             <HomeIcon sx={{ fontSize: '1.75rem', transform: isHomePage ? 'scale(1.1)' : 'scale(1)' }} />
