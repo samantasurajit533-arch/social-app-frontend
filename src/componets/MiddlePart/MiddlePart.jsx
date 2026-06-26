@@ -4,7 +4,6 @@ import ImageIcon from '@mui/icons-material/Image';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useDispatch, useSelector } from 'react-redux';
-
 import StoryCircle from './StoryCircle';
 import PostCard from '../Post/PostCard';
 import CreatePostModel1 from '../CreatePostModel/CreatePostModel1';
@@ -13,23 +12,27 @@ import { MoodContext } from '../../pages/HomePage/HomePage';
 
 const MiddlePart = () => {
   const dispatch = useDispatch();
-  const { posts = [], stories = [] } = useSelector(store => store.post || {});
-  const { user }                     = useSelector(store => store.auth || {});
-  const { blockFilters }             = useContext(MoodContext) || { blockFilters: [] };
+  
+  // Select safely with precise fallback structures
+  const posts = useSelector(store => store.post?.posts);
+  const stories = useSelector(store => store.post?.stories);
+  const user = useSelector(store => store.auth?.user);
+  const context = useContext(MoodContext);
+  const blockFilters = context?.blockFilters || [];
 
   const [openCreatePostModal, setOpenCreatePostModal] = useState(false);
-  const [displayedPosts,      setDisplayedPosts]      = useState([]);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
 
   useEffect(() => {
     dispatch(getAllPostAction());
     dispatch(getAllStoriesAction());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
-    if (posts?.length > 0) {
+    if (posts && posts.length > 0) {
       setDisplayedPosts(
-        blockFilters?.length > 0
-          ? posts.filter(post => !blockFilters.includes(post.category))
+        blockFilters.length > 0 
+          ? posts.filter(post => !blockFilters.includes(post.category)) 
           : posts
       );
     } else {
@@ -38,59 +41,59 @@ const MiddlePart = () => {
   }, [blockFilters, posts]);
 
   return (
-    // FIX 1 — removed outer minHeight, let content grow naturally
     <Box sx={{ width: '100%', py: 2 }}>
-
-      {/* story tray */}
-      <section style={{
-        display: 'flex', alignItems: 'center',
-        padding: '16px',
-        background: 'rgba(255,255,255,0.03)',
-        borderRadius: '24px',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255,255,255,0.1)',
-        overflowX: 'auto',
-        marginBottom: '24px',
-      }} className="no-scrollbar">
-        <div className="flex space-x-5">
+      
+      {/* Story Tray Container */}
+      <section 
+        style={{ 
+          display: 'block', // Changed to block to let internal flex wrapper manage dimensions safely
+          padding: '16px', 
+          background: 'rgba(255,255,255,0.03)', 
+          borderRadius: '24px', 
+          backdropFilter: 'blur(10px)', 
+          border: '1px solid rgba(255,255,255,0.1)', 
+          overflowX: 'auto', 
+          marginBottom: '24px',
+        }} 
+        className="no-scrollbar"
+      >
+        {/* Added min-w-max to ensure elements never compress or overlap horizontally */}
+        <div className="flex space-x-5 min-w-max items-center">
           <StoryCircle isCreateNew={true} image={user?.profileImage} />
-          {stories?.length > 0 && stories.map((item, index) => (
-            <StoryCircle
-              key={item.id || index}
-              hasStory={true}
-              image={item.image}
-              username={item.user?.firstName || "User"}
+          {stories && stories.length > 0 && stories.map((item, index) => (
+            <StoryCircle 
+              key={item.id || `story-${index}`} 
+              hasStory={true} 
+              image={item.image} 
+              username={item.user?.firstName || "User"} 
             />
           ))}
         </div>
       </section>
 
-      {/* create post */}
-      <Card sx={{
-        p: 3,
-        background: 'rgba(30,41,59,0.4)',
-        borderRadius: '24px',
-        boxShadow: 'none',
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}>
+      {/* Create Post Card */}
+      <Card sx={{ p: 3, background: 'rgba(30,41,59,0.4)', borderRadius: '24px', boxShadow: 'none', border: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center space-x-4">
-          <Avatar src={user?.profileImage} sx={{ width: 48, height: 48, border: '2px solid #6366f1' }}>
+          <Avatar src={user?.profileImage} sx={{ width: 48, height: 48, border: '2px solid #6366f1', flexShrink: 0 }}>
             {user?.firstName?.charAt(0) || "U"}
           </Avatar>
-          <Box
-            onClick={() => setOpenCreatePostModal(true)}
-            sx={{
-              flex: 1, bgcolor: 'rgba(255,255,255,0.05)',
-              borderRadius: '12px', px: 3, py: 1.5,
-              cursor: 'pointer', color: 'rgba(255,255,255,0.6)',
-              transition: '0.3s',
+          <Box 
+            onClick={() => setOpenCreatePostModal(true)} 
+            sx={{ 
+              flex: 1, 
+              bgcolor: 'rgba(255,255,255,0.05)', 
+              borderRadius: '12px', 
+              px: 3, 
+              py: 1.5, 
+              cursor: 'pointer', 
+              color: 'rgba(255,255,255,0.6)', 
+              transition: '0.3s', 
               '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
             }}
           >
             What's the news, {user?.firstName || 'User'}?
           </Box>
         </div>
-
         <div className="flex justify-between mt-5 pt-3 border-t border-white/5">
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setOpenCreatePostModal(true)}>
             <ImageIcon sx={{ color: '#38bdf8' }} />
@@ -107,10 +110,9 @@ const MiddlePart = () => {
         </div>
       </Card>
 
-      {/* posts feed */}
-      {/* FIX 2 — changed pb-20 (160px) to pb-4 (32px) — was causing bottom overflow */}
+      {/* Posts Feed */}
       <div className="mt-8 space-y-8 pb-4">
-        {displayedPosts?.length > 0 ? (
+        {displayedPosts && displayedPosts.length > 0 ? (
           displayedPosts.map((item, index) => (
             <PostCard key={item.id || `post-${index}`} item={item} />
           ))
@@ -122,10 +124,7 @@ const MiddlePart = () => {
         )}
       </div>
 
-      <CreatePostModel1
-        handleClose={() => setOpenCreatePostModal(false)}
-        open={openCreatePostModal}
-      />
+      <CreatePostModel1 handleClose={() => setOpenCreatePostModal(false)} open={openCreatePostModal} />
     </Box>
   );
 };

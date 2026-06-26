@@ -1,12 +1,32 @@
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  -webkit-overflow-scrolling: touch; /* Fixes iOS scroll stuttering and item clipping */
+}
+
+/* Custom Webkit Scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
+  height: 5px; /* Added to support horizontal custom scrollbars if needed */
 }
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
+
+/* Enhanced Mobile Safe Area handling */
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: 16px; /* Safe fallback for older devices */
+  padding-bottom: calc(16px + env(safe-area-inset-bottom)); /* Modern edge-to-edge screens */
 }

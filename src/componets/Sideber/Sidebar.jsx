@@ -15,7 +15,7 @@ const Sidebar = () => {
   const handleNavigate = (item) => {
     const path = item.title === "Message" ? `/message/${user?.id}` : 
                  item.title === "Profile" ? `/profile/${user?.id}` : 
-                 item.title == "Mood" ? `/moodpage/${user?.id}`:
+                 item.title === "Mood" ? `/moodpage/${user?.id}`:
                  item.path.toLowerCase();
     navigate(path);
     setMobileOpen(false);
@@ -118,7 +118,7 @@ const Sidebar = () => {
               {user?.firstName?.[0]}
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ pigeon: 'hidden', fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <Typography sx={{ fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.2, noWrap: true, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {user ? `${user.firstName} ${user.lastName || ''}` : "User"}
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', display: 'block' }}>
@@ -136,13 +136,17 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* 🌟 DESKTOP SIDEBAR BOX FIX (260px ফিক্সড উইথ এবং স্টিকি সম্পূর্ণ রিমুভ করা হয়েছে) */}
+      {/* 🛠️ FIXED DESKTOP SIDEBAR BOX */}
       <Box sx={{ 
         display: { xs: 'none', md: 'flex' }, 
         flexDirection: 'column', 
-        height: '100%', 
-        width: '100%', // 🌟 ফিক্সড: এটি এখন মেইন গ্রিডের সাইজ অনুযায়ী ফ্লেক্সিবল থাকবে, ওভারফ্লো করবে না
-        bgcolor: 'transparent',
+        height: '100vh', 
+        width: '280px', 
+        minWidth: '280px', 
+        bgcolor: '#0f172a', 
+        borderRight: '1px solid rgba(255,255,255,0.1)',
+        position: 'sticky',
+        top: 0,
         boxSizing: 'border-box'
       }}>
         {SidebarContent}
