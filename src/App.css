@@ -30,3 +30,8 @@
   padding-bottom: 16px; /* Safe fallback for older devices */
   padding-bottom: calc(16px + env(safe-area-inset-bottom)); /* Modern edge-to-edge screens */
 }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  /* Using your dynamic dark/light border variable instead of hardcoded #cbd5e1 */
+  background: var(--border); 
+  border-radius: 10px;
+}

@@ -124,30 +124,20 @@ const HomePage = () => {
           mt:       { xs: 0, md: 1 },
           height:   (isReels || isCreateReels || isMessage) ? { xs: 'calc(100vh - 64px)', md: 'calc(100vh - 56px)' } : 'auto',
         }}>
+{/* LEFT COLUMN — Desktop Sidebar Only */}
+<Grid item xs={0} md={3} lg={2.5} sx={{ display: { xs: 'none', md: 'block' } }}>
+  <Box sx={{
+    position:        'sticky',
+    top:             0,
+    height:          '100vh',
+    overflow:        'hidden', /* Prevents double scrollbar glitches */
+    boxSizing:       'border-box',
+    borderRight:     '1px solid rgba(255,255,255,0.06)', /* Separation line */
+  }}>
+    <Sidebar />
+  </Box>
+</Grid>
 
-          {/* LEFT COLUMN — Desktop Sidebar Only */}
-          <Grid item xs={0} md={3.5} lg={3} sx={{ display: { xs: 'none', md: 'block' } }}>
-            <Box sx={{
-              position:        'sticky',
-              top:             24,
-              height:          'calc(100vh - 48px)',
-              overflowY:       'auto',
-              overflowX:       'hidden',
-              borderRadius:    4,
-              bgcolor:         'rgba(30,41,59,0.4)',
-              backdropFilter:  'blur(15px)',
-              border:          `1px solid ${userMood !== "NORMAL" ? t.glow : 'rgba(255,255,255,0.06)'}`,
-              boxShadow:       `0 4px 20px ${t.glow}`,
-              transition:      'all 0.5s ease',
-              p:               0.5,
-              boxSizing:       'border-box',
-              '&::-webkit-scrollbar': { display: 'none' },
-              msOverflowStyle: 'none',
-              scrollbarWidth:  'none',
-            }}>
-              <Sidebar />
-            </Box>
-          </Grid>
 
           {/* MIDDLE COLUMN — Content Display Grid */}
           <Grid
